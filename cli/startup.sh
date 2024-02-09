@@ -11,4 +11,4 @@ aws ec2 authorize-security-group-ingress --group-name $SG_NAME --protocol all --
 
 subnet=$(aws ec2 describe-subnets --query "Subnets[0].SubnetId" --output text)
 
-aws ec2 run-instances --image-id ami-0c7217cdde317cfec --count 1 --instance-type t2.medium --key-name my-key --security-group-ids $sg --subnet-id $subnet
+aws ec2 run-instances --image-id ami-0c7217cdde317cfec --count 1 --instance-type t2.micro --key-name my-key --security-group-ids $sg --subnet-id $subnet
