@@ -6,19 +6,23 @@ Parameters:
   VpcCIDR:
     Type: String
     Description: CIDR block for the VPC
-    Default: 10.0.0.0/16
+    Default: 192.168.0.0/16   # Changed default CIDR block
   PublicSubnetCIDR:
     Type: String
     Description: CIDR block for the public subnet
-    Default: 10.0.1.0/24
+    Default: 192.168.1.0/24    # Changed default CIDR block
   PrivateSubnetCIDR:
     Type: String
     Description: CIDR block for the private subnet
-    Default: 10.0.2.0/24
-  AvailabilityZone:
+    Default: 192.168.2.0/24    # Changed default CIDR block
+  AvailabilityZonePublic:
     Type: AWS::EC2::AvailabilityZone::Name
-    Description: The availability zone for the resources
+    Description: The availability zone for the public subnet
     Default: us-east-1a
+  AvailabilityZonePrivate:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: The availability zone for the private subnet
+    Default: us-east-1b   # Changed default AZ for private subnet
 
 Resources:
   MyVPC:
@@ -34,7 +38,7 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: !Ref PublicSubnetCIDR
-      AvailabilityZone: !Ref AvailabilityZone
+      AvailabilityZone: !Ref AvailabilityZonePublic   # Changed AZ reference
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
@@ -45,7 +49,7 @@ Resources:
     Properties:
       VpcId: !Ref MyVPC
       CidrBlock: !Ref PrivateSubnetCIDR
-      AvailabilityZone: !Ref AvailabilityZone
+      AvailabilityZone: !Ref AvailabilityZonePrivate   # Changed AZ reference
       Tags:
         - Key: Name
           Value: Private Subnet
