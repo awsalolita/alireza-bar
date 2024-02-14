@@ -1,5 +1,11 @@
-mkdir -p layer/python/lib/python3.9/site-packages
-pip3 install requests -t layer/python/lib/python3.9/site-packages/
+echo "python version"
+read version 
+
+echo "package name"
+read package
+
+mkdir -p layer/python/lib/$version/site-packages
+pip3 install $package -t layer/python/lib/$version/site-packages/
 
 cd layer
-zip -r mypackage.zip *
+zip -r $package.zip *
