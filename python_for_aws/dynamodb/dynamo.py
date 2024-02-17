@@ -21,12 +21,35 @@ table = dynamodb.Table('mytable')
 
 items = table.scan()['Items']
 
-for i in items:
-    if "x" in i:
-        print(i)
+## REMEMBER to check
+# for i in items:
+#     if "x" in i:
+#         print(i)
 
 
-# import one item
-# N number S string
-table.put_item(Item={'id' : t , 'sentiment' : 'ljlkjljlkjl'} )
+# query only based on partiion key
+dynamodb.query(TableName='mytable' ,KeyConditionExpression='id = :val' , ExpressionAttributeValues={ ':val' : {'S' : '1'}} )
 
+# query based on partition key and sort key
+dynamodb.query(TableName='mytable' ,KeyConditionExpression='id = :val AND sentiment = :Sval' , ExpressionAttributeValues={ ':val' : {'S' : '1'} , ':Sval' : {'S' : 'hello'}} )
+
+
+# scan table and filter based on sort key NOT Efficient
+dynamodb.scan(TableName='mytable' , FilterExpression='sentiment = :val' , ExpressionAttributeValues={ ':val' : {'S' : 'positive'}} )['Items']
+
+
+# filter a query based on an attribute , MUST have a partition key
+dynamodb.query(TableName='mytable' ,KeyConditionExpression='id = :val' , FilterExpression='message = :msg' , ExpressionAttributeValues={ ':val' : {'S' : '1'} , ':msg' : {'S' : 'aloo'}} )
+dynamodb.query(TableName='mytable' ,KeyConditionExpression='id = :val AND sentiment = :Sval ' , FilterExpression='message = :msg' , ExpressionAttributeValues={ ':val' : {'S' : '1'} , ':msg' : {'S' : 'aloo'} , ':Sval' : {'S' : 'hello'} } )['Items']
+
+# filter a scan based on an attribute , 
+dynamodb.scan(TableName='mytable' , FilterExpression='message = :msg' , ExpressionAttributeValues={ ':msg' : {'S' : 'aloo'}} )['Items']
+
+# Query based on Global Secondary Index
+dynamodb.query(TableName='mytable', IndexName='message-index' ,KeyConditionExpression='message = :msg' , ExpressionAttributeValues={ ':msg' : {'S' : 'aloo'}} )['Items']
+
+
+# update item (only attributes can be updated) , both pk and sk are immutable and needed
+new_message = 'Updated message content here'
+
+dynamodb.update_item(TableName='mytable' , Key={'id' : {'S' : '1'} , 'sentiment' : {'S' : 'hello'}} , UpdateExpression='SET message = :new_message' , ExpressionAttributeValues={':new_message': {'S': new_message}} , ReturnValues='UPDATED_NEW')
