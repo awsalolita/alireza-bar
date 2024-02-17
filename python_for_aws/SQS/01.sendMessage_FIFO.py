@@ -2,7 +2,7 @@ import json
 import boto3
 
 def lambda_handler(event, context):
-    # TODO implement
+    # direct POST
     try:
         post = json.loads(event['body'])
         action = post['action']
