@@ -5,9 +5,8 @@ curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 
 
 
 echo "alias k=kubectl" >> ~/.zshrc
-echo "alias kcd='kubectl  config  set-context  $(kubectl  config current-context) --namespace'" >> ~/.zshrc 
+echo "alias kcd='kubectl  config  set-context  --current --namespace'" >> ~/.zshrc 
 echo "source <(kubectl completion zsh)" >> ~/.zshrc
-echo "source <(kubeadm completion zsh)" >> ~/.zshrc
 echo "source <(helm completion zsh)" >> ~/.zshrc
 echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.zshrc
 echo "source <(docker completion zsh)" >> ~/.zshrc
@@ -25,3 +24,8 @@ curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_ch
 tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
 
 sudo mv /tmp/eksctl /usr/local/bin
+
+# eksctl completion
+echo "source <(eksctl completion zsh)" >> ~/.zshrc
+
+zsh
