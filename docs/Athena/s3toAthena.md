@@ -1,3 +1,13 @@
+* elb logs to s3
+```
+CREATE EXTERNAL TABLE IF NOT EXISTS elb_raw_logs (
+  raw_log STRING
+)
+ROW FORMAT DELIMITED 
+FIELDS TERMINATED BY '\n'
+LOCATION 's3://arpjoker/AWSLogs/258612289645/elasticloadbalancing/us-east-1/2024/03/05/';
+```
+
 
 * create vpc flow logs to s3
 * launch athena , change settings to s3 url( go till the day for url)
