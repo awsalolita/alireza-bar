@@ -1,11 +1,11 @@
 import boto3
 
 # Initialize the CognitoIdentityProvider client
-client = boto3.client('cognito-idp')
+client = boto3.client('cognito-idp')    
 
 # Authenticate user and get tokens
 response = client.initiate_auth(
-    ClientId='your_client_id',
+    ClientId='<your_client_id>',
     AuthFlow='USER_PASSWORD_AUTH',
     AuthParameters={
         'USERNAME': 'user@example.com',
@@ -17,14 +17,14 @@ response = client.initiate_auth(
 id_token = response['AuthenticationResult']['IdToken']
 
 # Get identity ID using tokens
-cognito_identity = boto3.client('cognito-identity', region_name='your_cognito_region')
-identity_pool_id = 'your_identity_pool_id'
+cognito_identity = boto3.client('cognito-identity')
+identity_pool_id = '<your_identity_pool_id>'
 
 # Get identity ID associated with the user from Cognito User Pool
 response = cognito_identity.get_id(
     IdentityPoolId=identity_pool_id,
     Logins={
-        'cognito-idp.your_cognito_region.amazonaws.com/your_user_pool_id': id_token
+        'cognito-idp.<your_cognito_region>.amazonaws.com/<your_user_pool_id>': id_token
     }
 )
 
