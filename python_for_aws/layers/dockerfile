@@ -1,0 +1,21 @@
+# docker run -e PACKAGE_NAME="pillow" -e PYTHON_VERSION="python3.11" -v $(pwd):/app test
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+
+RUN apt update && apt install -y zip
+# Copy the script into the container
+COPY build_package.sh .
+
+# Make the script executable
+RUN chmod +x build_package.sh
+
+# Set default environment variables
+ENV PACKAGE_NAME ""
+ENV PYTHON_VERSION python3.11
+
+# Define entrypoint
+ENTRYPOINT ["bash" , "./build_package.sh"]
