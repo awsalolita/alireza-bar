@@ -1,0 +1,675 @@
+Description:  This template deploys various components to test a transactional replication from Aurora postgres source to S3 Datalake 
+
+Parameters:
+
+  VpcCIDR:
+    Description: The IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.0.0.0/16
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x
+
+  PrivateSubnet1CIDR:
+    Description: The IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.10.0/24
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x
+    
+  PrivateSubnet2CIDR:
+    Description: The IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.20.0/24
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x
+    
+  PublicSubnetCIDR:
+    Description: The IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.30.0/24
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x
+    
+  AuroraDBMasterUserPassword:
+    Type: String
+    Description: Aurora database master user password. This will be used for Aurora cluster. Must have atleast 8 characters, one upper case, one lower case and one number. Special characters are not allowed
+    AllowedPattern: '^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]{8,}$'
+    ConstraintDescription: Must have atleast 8 characters, one upper case, one lower case and one number. Special characters are not allowed
+    NoEcho: true
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: The KeyPair to be used in your EC2 instance. This EC2 instance will be used as a proxy to connect from your SQL client to Aurora postgres source database.
+    ConstraintDescription: Please select a key to be used to login to the EC2 instance
+    
+  EC2ImageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Latest AMI ID of Amazon Linux 2. You can keep the default value for this.
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+    
+  DMSBatchUnloadIntervalInSecs:
+    Type: String
+    Description: The interval in which DMS will unload the data to the raw bucket. The default setting is to unload in every 5 seconds.
+    Default: 5
+
+Resources:
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo  
+      
+  VPCInternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    DependsOn:
+      - InternetGateway
+      - VPC      
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+      
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    DependsOn:
+      - VPC    
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PublicSubnetCIDR
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    DependsOn:
+      - VPC    
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC      
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    DependsOn:
+      - VPC     
+    Properties:
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref VPC      
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn:
+      - VPC    
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    DependsOn:
+      - VPC    
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: VPCInternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn:
+      - NatGatewayEIP
+      - PublicSubnet    
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+      
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PrivateRouteTable
+      - PrivateSubnet1
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1
+
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PrivateRouteTable
+      - PrivateSubnet2
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet2
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    DependsOn:
+      - PublicRouteTable
+      - PublicSubnet    
+    Properties:
+      RouteTableId: !Ref PublicRouteTable    
+      SubnetId: !Ref PublicSubnet
+        
+  PublicInternetRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - PublicRouteTable
+      - InternetGateway 
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  DefaultPrivateRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - PrivateRouteTable
+      - NatGateway     
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+      
+  DmsSampleSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    DependsOn:
+      - VPC    
+    Properties:
+      GroupName: dms-sample-sg
+      GroupDescription: Security group to protect DmsSample resources
+      VpcId: !Ref VPC
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  SelfRefSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: DmsSampleSecurityGroup
+    Properties:
+      GroupId: !Ref DmsSampleSecurityGroup
+      IpProtocol: tcp
+      FromPort: 0
+      ToPort: 65535
+      Description: Self-referencing rule
+      SourceSecurityGroupId: !GetAtt DmsSampleSecurityGroup.GroupId
+
+  SecurityGroupEgress443:
+    Type: AWS::EC2::SecurityGroupEgress
+    DependsOn: DmsSampleSecurityGroup
+    Properties: 
+      Description: Egress to install yum packages
+      CidrIp: "0.0.0.0/0"
+      FromPort: 443
+      GroupId: !Ref DmsSampleSecurityGroup
+      IpProtocol: tcp
+      ToPort: 443
+  
+  SecurityGroupEgress80:
+    Type: AWS::EC2::SecurityGroupEgress
+    DependsOn: DmsSampleSecurityGroup
+    Properties: 
+      Description: Egress to install yum packages
+      CidrIp: "0.0.0.0/0"
+      FromPort: 80
+      GroupId: !Ref DmsSampleSecurityGroup
+      IpProtocol: tcp
+      ToPort: 80
+
+  SecurityGroupEgress5432:
+    Type: AWS::EC2::SecurityGroupEgress
+    DependsOn: DmsSampleSecurityGroup
+    Properties: 
+      Description: DB Connectivity
+      CidrIp: !Ref VpcCIDR
+      FromPort: 5432
+      GroupId: !Ref DmsSampleSecurityGroup
+      IpProtocol: tcp
+      ToPort: 5432
+      
+  S3VPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    DependsOn:
+      - PrivateRouteTable
+      - VPC
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - 
+            Principal: "*"
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:DeleteObject
+            Resource:
+              - !Join ['', ["arn:aws:s3:::", !Ref TargetS3Bucket]]
+              - !Join ['', ["arn:aws:s3:::", !Ref TargetS3Bucket, "/*"]]
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: !Ref VPC      
+
+  ExecuteLambdaFnsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DmsSampleExecuteLambdaFnsRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  ReqdToTriggerLambdaFns:
+    Type: AWS::IAM::ManagedPolicy
+    DependsOn:
+      - ExecuteLambdaFnsRole
+      - TargetS3Bucket
+    Properties:
+      ManagedPolicyName: DmsSampleReqdToTriggerLambdaFns
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - iam:GetRole
+              - iam:DetachRolePolicy
+              - iam:UntagRole
+              - iam:ListRoleTags
+              - iam:TagRole
+              - iam:CreateRole
+              - iam:DeleteRole
+              - iam:AttachRolePolicy
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/dms-vpc-role
+      Roles:
+        - DmsSampleExecuteLambdaFnsRole
+  
+  CreateDMSRoleLambdaFn:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - ReqdToTriggerLambdaFns
+      - ExecuteLambdaFnsRole
+    Properties:
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          import urllib3
+          import time
+            
+          iam_client = boto3.client('iam')
+          http = urllib3.PoolManager()
+            
+          def lambda_handler(event, context):
+            print('Event: %s' % json.dumps(event))
+            response = { 'StackId': event['StackId'], 'RequestId': event['RequestId'], 'LogicalResourceId': event['LogicalResourceId'] }
+            if event['RequestType'] == 'Create':
+              try:
+                iam_client.get_role(RoleName='dms-vpc-role')
+                response.update({ 'Status': 'SUCCESS', 'PhysicalResourceId': 'dms-vpc-roleExists' })
+                print('dms-vpc-role exists. No action taken.')
+              except Exception as e:
+                if e.response['Error']['Code'] == 'NoSuchEntity':
+                  iam_client.create_role(Path='/', RoleName='dms-vpc-role', AssumeRolePolicyDocument='{ "Version": "2012-10-17", "Statement": [ { "Sid": "", "Effect": "Allow", "Principal": { "Service": "dms.amazonaws.com" }, "Action": "sts:AssumeRole" } ] }')
+                  iam_client.attach_role_policy(PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole', RoleName='dms-vpc-role')
+                  iam_client.tag_role(RoleName='dms-vpc-role', Tags=[{ 'Key': 'Project', 'Value': 'DmsMaskingDemo' }])
+                  response.update({ 'Status': 'SUCCESS', 'PhysicalResourceId': 'dms-vpc-roleCreated' })
+                  print('dms-vpc-role created.')
+                  time.sleep(90)
+                else:
+                  response.update({ 'Status': 'FAILED', 'Reason': str(e), 'PhysicalResourceId': 'dms-vpc-roleCreationFailed' })
+                  print('dms-vpc-role creation failed.')
+            if event['RequestType'] == 'Update':
+              response.update({ 'Status': 'SUCCESS', 'PhysicalResourceId': 'dms-vpc-roleNothingChangedOnUpdate' })
+              print('dms-vpc-role was not updated. Nothing changed.')
+            if event['RequestType'] == 'Delete':
+              dmsVPCRoleTags = iam_client.list_role_tags(RoleName='dms-vpc-role')['Tags']
+              if len(dmsVPCRoleTags) == 0:
+                print('Role has not been created by this stack or the tags have been manually edited/removed. No action taken.')
+                response.update({ 'Status': 'SUCCESS', 'PhysicalResourceId': 'dms-vpc-roleNothingChangedOnDelete' })
+              else:
+                if dmsVPCRoleTags[0]['Value'] == 'DmsMaskingDemo':
+                  try:
+                    iam_client.detach_role_policy(RoleName='dms-vpc-role', PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole')
+                    iam_client.delete_role(RoleName='dms-vpc-role')
+                    response.update({ 'Status': 'SUCCESS', 'PhysicalResourceId': 'dms-vpc-roleDeleted' })
+                    print('dms-vpc-role deleted.')
+                  except Exception as e:
+                    response.update({ 'Status': 'FAILED', 'Reason': str(e), 'PhysicalResourceId': 'dms-vpc-roleDeleteFailed' })
+                    print('dms-vpc-role delete failed.')
+                else:
+                  print('Role has not been created by this stack or the tags have been manually edited/removed. No action taken.')
+                  response.update({ 'Status': 'SUCCESS', 'PhysicalResourceId': 'dms-vpc-roleNothingChangedOnDelete' })                          
+            resp = http.request('PUT', event['ResponseURL'], body = json.dumps(response), headers = {'Content-Type': 'application/json'}, retries = False)
+            print('http resp:' + resp.data.decode('utf-8'))
+            print(response)
+            return(response)
+      FunctionName: create-dms-role
+      MemorySize: 128
+      Runtime: python3.6
+      Description: Lambda function that creates dms-vpc-role.
+      Handler: index.lambda_handler
+      Role: !GetAtt ExecuteLambdaFnsRole.Arn
+      Timeout: 900      
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+          
+  CreateDMSRole:
+    Type: Custom::CreateDMSRole
+    DependsOn:
+      - CreateDMSRoleLambdaFn
+    Properties:
+      ServiceToken: !GetAtt CreateDMSRoleLambdaFn.Arn
+
+  ReqdForDMSToReplicateDataToS3:
+    Type: AWS::IAM::ManagedPolicy
+    DependsOn:
+      - DMSWriteToRawS3Role
+      - TargetS3Bucket
+    Properties:
+      ManagedPolicyName: DmsSampleReqdForDMSToReplicateDataToS3
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - 
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:DeleteObject
+            Resource:
+              - !Join ['', ["arn:aws:s3:::", !Ref TargetS3Bucket]]
+              - !Join ['', ["arn:aws:s3:::", !Ref TargetS3Bucket, "/*"]]               
+      Roles:
+        - DmsSampleDMSWriteToRawS3Role
+
+  DMSWriteToRawS3Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DmsSampleDMSWriteToRawS3Role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - dms.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+
+
+  TargetS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:        
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'AES256'
+            
+  RDSDBClusterParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      Description: "Aurora PG Cluster Parameter Group for dms-sample-source-db"
+      Family: aurora-postgresql11 
+      Parameters:
+        rds.logical_replication: 1
+        wal_sender_timeout: 0
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  AuroraSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    DependsOn:
+      - PrivateSubnet1
+      - PrivateSubnet2
+    Properties:
+      DBSubnetGroupDescription: "Subnet group for Aurora source database"
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  AuroraCluster:        
+    Type: AWS::RDS::DBCluster
+    DependsOn:
+      - DmsSampleSecurityGroup
+      - RDSDBClusterParameterGroup
+      - AuroraSubnetGroup
+    DeletionPolicy: Delete
+    Properties:
+      Engine: aurora-postgresql
+      EngineVersion: 11.6
+      DBClusterIdentifier: dms-sample-source-db
+      Port: 5432
+      MasterUsername: postgres
+      MasterUserPassword: !Ref AuroraDBMasterUserPassword
+      VpcSecurityGroupIds:
+        - !Ref DmsSampleSecurityGroup  
+      DBClusterParameterGroupName: !Ref RDSDBClusterParameterGroup
+      StorageEncrypted:  true
+      DBSubnetGroupName: !Ref AuroraSubnetGroup
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  AuroraDBInstance1:
+    Type: AWS::RDS::DBInstance
+    DependsOn:
+      - AuroraCluster
+      - AuroraSubnetGroup
+    DeletionPolicy: Delete
+    Properties:
+      CopyTagsToSnapshot: true  
+      DBInstanceClass: db.r5.large
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceIdentifier: dms-sample-source-db-instance-1     
+      Engine: aurora-postgresql
+      EngineVersion: 11.6      
+      AutoMinorVersionUpgrade: true
+      PubliclyAccessible: false
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      DBSubnetGroupName: !Ref AuroraSubnetGroup
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  EC2InstanceForTunnel:
+    Type: AWS::EC2::Instance
+    DependsOn:
+      - DmsSampleSecurityGroup
+      - PublicSubnet
+    Properties:
+      InstanceType: t3.small
+      KeyName: !Ref KeyName
+      ImageId: !Ref EC2ImageId
+      SecurityGroupIds:
+        - !GetAtt DmsSampleSecurityGroup.GroupId
+      SubnetId: !Ref PublicSubnet
+      BlockDeviceMappings: 
+      - DeviceName: /dev/xvda
+        Ebs:
+          Encrypted: false
+          VolumeType: gp2
+          DeleteOnTermination: true
+          VolumeSize: 8
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+
+  DMSSubnetGroup:
+    Type: AWS::DMS::ReplicationSubnetGroup
+    DependsOn:
+      - PrivateSubnet1
+      - PrivateSubnet2
+      - CreateDMSRole
+    Properties:
+      ReplicationSubnetGroupDescription: "Subnet group for DMS replication instance"
+      ReplicationSubnetGroupIdentifier: dms-sample-subnet-group
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  DMSReplicationInstance:
+    Type: AWS::DMS::ReplicationInstance
+    DependsOn:
+      - DMSSubnetGroup
+      - DmsSampleSecurityGroup
+    Properties:
+      ReplicationInstanceClass: dms.t2.small
+      PubliclyAccessible: false
+      ReplicationSubnetGroupIdentifier: !Ref DMSSubnetGroup
+      VpcSecurityGroupIds:
+        - !GetAtt DmsSampleSecurityGroup.GroupId
+      EngineVersion: 3.3.4
+      AllocatedStorage: 5
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  DMSSourceDBDMSEndpoint:
+    Type: AWS::DMS::Endpoint
+    DependsOn:
+      - AuroraCluster
+      - AuroraDBInstance1
+    Properties:
+      DatabaseName: postgres
+      EndpointType: source
+      EngineName: aurora-postgresql
+      EndpointIdentifier: dms-sample-aurora-pg-source
+      Password: !Ref AuroraDBMasterUserPassword
+      Port: 5432
+      ServerName: !GetAtt AuroraCluster.Endpoint.Address
+      Username: postgres
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+        
+  DMSTargetS3Endpoint:
+    Type: AWS::DMS::Endpoint
+    DependsOn:
+      - TargetS3Bucket
+      - DMSWriteToRawS3Role
+    Properties:
+      EndpointType: target
+      EngineName: s3
+      EndpointIdentifier: dms-sample-raw-zone-s3
+      S3Settings:
+        BucketName: !Ref TargetS3Bucket
+        ServiceAccessRoleArn: !GetAtt DMSWriteToRawS3Role.Arn     
+      ExtraConnectionAttributes: !Join ['', ["CdcMaxBatchInterval=", !Ref DMSBatchUnloadIntervalInSecs, ";DataFormat=parquet;ParquetTimestampInMillisecond=true;TimestampColumnName=update_ts_dms;"]]
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo 
+        
+  DMSReplicationTask:
+    Type: AWS::DMS::ReplicationTask
+    DependsOn:
+      - DMSReplicationInstance
+      - DMSSourceDBDMSEndpoint
+      - DMSTargetS3Endpoint
+    Properties:
+      MigrationType: full-load-and-cdc
+      ReplicationInstanceArn: !Ref DMSReplicationInstance
+      ReplicationTaskIdentifier: dms-sample-aurora-src-to-raw-s3-tgt
+      SourceEndpointArn: !Ref DMSSourceDBDMSEndpoint
+      TargetEndpointArn: !Ref DMSTargetS3Endpoint
+      TableMappings: "{\n    \"rules\": [\n        {\n            \"rule-type\": \"selection\",\n            \"rule-id\": \"1\",\n            \"rule-name\": \"1\",\n            \"object-locator\": {\n                \"schema-name\": \"%\",\n                \"table-name\": \"%\"\n            },\n            \"rule-action\": \"include\",\n            \"filters\": []\n        },\n        {\n            \"rule-type\": \"transformation\",\n            \"rule-id\": \"2\",\n            \"rule-name\": \"2\",\n            \"rule-target\": \"column\",\n            \"object-locator\": {\n                \"schema-name\": \"%\",\n                \"table-name\": \"address_book\"\n            },\n            \"rule-action\": \"add-column\",\n            \"value\": \"ssn_or_emp_no_transformed\",\n            \"expression\": \"CASE WHEN $ssn_or_emp_no glob '[0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' THEN hash_sha256($ssn_or_emp_no) ELSE $ssn_or_emp_no END\",\n            \"data-type\": {\n                \"type\": \"string\",\n                \"length\": 65\n            }\n        },\n        {\n            \"rule-type\": \"transformation\",\n            \"rule-id\": \"3\",\n            \"rule-name\": \"3\",\n            \"rule-target\": \"column\",\n            \"object-locator\": {\n                \"schema-name\": \"%\",\n                \"table-name\": \"address_book\",\n                \"column-name\": \"ssn_or_emp_no\"\n            },\n            \"rule-action\": \"remove-column\"\n        }\n    ]\n}"
+      ReplicationTaskSettings: "{\"TargetMetadata\":{\"LimitedSizeLobMode\":true,\"LobMaxSize\":32},\"FullLoadSettings\":{\"TargetTablePrepMode\":\"DROP_AND_CREATE\",\"CreatePkAfterFullLoad\":false,\"StopTaskCachedChangesApplied\":false,\"StopTaskCachedChangesNotApplied\":false},\"Logging\":{\"EnableLogging\":true,\"LogComponents\":[{\"Id\":\"TRANSFORMATION\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"SOURCE_UNLOAD\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"IO\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"TARGET_LOAD\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"PERFORMANCE\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"SOURCE_CAPTURE\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"SORTER\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"REST_SERVER\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"VALIDATOR_EXT\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"TARGET_APPLY\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"TASK_MANAGER\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"TABLES_MANAGER\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"METADATA_MANAGER\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"FILE_FACTORY\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"COMMON\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"ADDONS\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"DATA_STRUCTURE\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"COMMUNICATION\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"},{\"Id\":\"FILE_TRANSFER\",\"Severity\":\"LOGGER_SEVERITY_DEFAULT\"}]}}"
+      Tags:
+        -
+          Key: Project
+          Value: DmsMaskingDemo
+
+Outputs:
+  PublicIPOfEC2InstanceForTunnel:
+    Description: Public IP of the EC2 instance that can be used as a jump box
+    Value: !GetAtt EC2InstanceForTunnel.PublicIp
+
+  TargetS3Bucket:
+    Description: S3 bucket that will store the output from DMS
+    Value: !Ref TargetS3Bucket
+
+  AuroraSourceEndpointAddress:
+    Description: Endpoint of the source Aurora cluster
+    Value: !GetAtt AuroraCluster.Endpoint.Address    
