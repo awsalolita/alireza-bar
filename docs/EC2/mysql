@@ -1,0 +1,110 @@
+
+
+* install mysql
+* then start it
+* then get the temp password from log file
+* change user root , localhost password 
+```
+sudo mysql_secure_installation
+
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'ooVsRCalC5&U1';
+CREATE USER 'root'@'%' IDENTIFIED BY 'ooVsRCalC5&U1';
+GRANT REPLICATION CLIENT  ON *.* TO 'root'@'%';
+GRANT REPLICATION SLAVE ON *.* TO 'root'@'%';
+    GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
+```
+* in /etc/my.cnf , add
+```
+server_id=1
+log_bin = /var/log/mysql/mysql-bin.log
+binlog_format=ROW
+expire_logs_days=1
+binlog_checksum=NONE
+binlog_row_image=FULL
+log_slave_updates=TRUE
+```
+* create bin file
+```
+mkdir /var/log/mysql
+sudo chown -R mysql:mysql /var/log/mysql/
+sudo chmod -R 755 /var/log/mysql/
+```
+* check with
+```
+SHOW VARIABLES LIKE 'log_bin';
+SHOW GLOBAL VARIABLES LIKE 'local_infile';
+SET GLOBAL local_infile=ON; 
+```
+
+```
+{
+  "rules": [
+    {
+      "rule-type": "selection",
+      "rule-id": "429919023",
+      "rule-name": "429919023",
+      "object-locator": {
+        "schema-name": "sys",
+        "table-name": "%"
+      },
+      "rule-action": "exclude",
+      "filters": []
+    },
+    {
+      "rule-type": "selection",
+      "rule-id": "429917237",
+      "rule-name": "429917237",
+      "object-locator": {
+        "schema-name": "performance_schema ",
+        "table-name": "%"
+      },
+      "rule-action": "exclude",
+      "filters": []
+    },
+    {
+      "rule-type": "selection",
+      "rule-id": "429916370",
+      "rule-name": "429916370",
+      "object-locator": {
+        "schema-name": "mysql",
+        "table-name": "%"
+      },
+      "rule-action": "exclude",
+      "filters": []
+    },
+    {
+      "rule-type": "selection",
+      "rule-id": "429915408",
+      "rule-name": "429915408",
+      "object-locator": {
+        "schema-name": "information_schema ",
+        "table-name": "%"
+      },
+      "rule-action": "exclude",
+      "filters": []
+    },
+    {
+      "rule-type": "selection",
+      "rule-id": "429883044",
+      "rule-name": "429883044",
+      "object-locator": {
+        "schema-name": "awsdms_control ",
+        "table-name": "%"
+      },
+      "rule-action": "exclude",
+      "filters": []
+    },
+    {
+      "rule-type": "selection",
+      "rule-id": "429823266",
+      "rule-name": "429823266",
+      "object-locator": {
+        "schema-name": "%",
+        "table-name": "%"
+      },
+      "rule-action": "include",
+      "filters": []
+    }
+  ]
+}
+```
