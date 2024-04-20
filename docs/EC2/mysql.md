@@ -4,6 +4,7 @@
 * then start it
 * then get the temp password from log file
 * change user root , localhost password 
+note: random mysql data generator mockaroo
 ```
 sudo mysql_secure_installation
 
