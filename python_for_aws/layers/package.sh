@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# docker run -e PACKAGE_NAME="pillow" -e PYTHON_VERSION="python3.11" -v $(pwd):/app test
 # Check if package name is provided
 if [ -z "$PACKAGE_NAME" ]; then
     echo "Error: Package name not provided."
