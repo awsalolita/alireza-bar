@@ -29,6 +29,8 @@ def lambda_handler(event, context):
     username = 'jane_doe'
     database_name = 'mysql'
     #https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
+    #https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+    # 
     cert_url = 'https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem'
     cert_path = '/tmp/global-bundle.pem'
     
