@@ -181,7 +181,7 @@ ingress:
     alb.ingress.kubernetes.io/scheme: internet-facing
     # when using fargate or use service nodeport
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/group.order: 1
+    alb.ingress.kubernetes.io/group.order: '1'
     
   hosts:
     - host: arp.com # remove it if you dont have domain
