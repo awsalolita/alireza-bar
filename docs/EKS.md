@@ -4,7 +4,7 @@
 
 * access the cluster with cloudshell 
 ```
-aws eks update-kubeconfig --region region-code --name my-cluster
+aws eks update-kubeconfig --region region-code --name k8s
 kubectl rollout restart -n kube-system deployment coredns
 ```
 
@@ -153,3 +153,8 @@ eksctl create addon --name aws-ebs-csi-driver --cluster k8s --service-account-ro
 kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
 ```
 * go create storageclass
+
+
+
+
+# karpenter
