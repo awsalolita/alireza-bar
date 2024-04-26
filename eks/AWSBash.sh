@@ -18,17 +18,27 @@ tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
 sudo mv /tmp/eksctl /usr/local/bin
 
 # install aws cli
+sudo apt update 
+sudo apt install unzip -y
+
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
 
+
 # alias
-source /etc/bash_completionif [ -f /etc/bash_completion ] && ! shopt -oq posix; then
-    . /etc/bash_completion
-fi
+#  aws eks update-kubeconfig --region region-code --name my-cluster
+# kubectl rollout restart -n kube-system deployment coredns
+
+
 echo "alias k=kubectl" >> ~/.bashrc
-echo "alias kcd='kubectl  config  set-context  $(kubectl  config current-context) --namespace'" >> ~/.bashrc 
+echo "alias kap='kubectl apply -f'" >> ~/.bashrc
+echo "alias kcd='kubectl  config  set-context --current --namespace'" >> ~/.bashrc 
 echo "source <(kubectl completion bash)" >> ~/.bashrc
 echo "source <(helm completion bash)" >> ~/.bashrc
 echo 'complete -o default -F __start_kubectl k' >>~/.bashrc
-source /etc/bash_completion
+echo "complete -C '/usr/local/bin/aws_completer' aws" >> ~/.bashrc
+echo "source /etc/bash_completion" >> ~/.bashrc
+echo "source <(eksctl completion bash)" >> ~/.bashrc
+echo "export KUBE_EDITOR='vim'" >> ~/.bashrc
+
