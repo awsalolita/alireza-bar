@@ -129,3 +129,27 @@ helm repo add app https://aahemm.github.io/helm-microservice
 helm repo update
 helm install app app/app --values ./values.yaml
 ```
+
+
+# EBS CSI driver
+
+* create iam role
+```
+eksctl create iamserviceaccount \
+    --name ebs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster k8s \
+    --role-name AmazonEKS_EBS_CSI_DriverRole \
+    --role-only \
+    --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+    --approve
+
+```
+
+* create add on
+```
+eksctl create addon --name aws-ebs-csi-driver --cluster k8s --service-account-role-arn arn:aws:iam::<>:role/AmazonEKS_EBS_CSI_DriverRole --force
+
+kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+```
+* go create storageclass

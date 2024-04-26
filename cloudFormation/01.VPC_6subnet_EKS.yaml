@@ -1,0 +1,286 @@
+Parameters:
+  VpcName:
+    Type: String
+    Description: Name of the VPC
+    Default: MyVPC
+  VpcCIDR:
+    Type: String
+    Description: CIDR block for the VPC
+    Default: 192.168.0.0/16   # Changed default CIDR block
+  PublicSubnetCIDR:
+    Type: String
+    Description: CIDR block for the public subnet
+    Default: 192.168.1.0/24    # Changed default CIDR block
+  PrivateSubnetCIDR:
+    Type: String
+    Description: CIDR block for the private subnet
+    Default: 192.168.2.0/24    # Changed default CIDR block
+  AvailabilityZonePublic:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: The availability zone for the public subnet
+    Default: us-east-1a
+  AvailabilityZonePrivate:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: The availability zone for the private subnet
+    Default: us-east-1a   # Changed default AZ for private subnet
+
+  PublicSubnet2CIDR:
+    Type: String
+    Description: CIDR block for the second public subnet
+    Default: 192.168.3.0/24
+  PrivateSubnet2CIDR:
+    Type: String
+    Description: CIDR block for the second private subnet
+    Default: 192.168.4.0/24
+  AvailabilityZonePublic2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-east-1b   # Changed default AZ for private subnet
+    Description: The availability zone for the second public subnet
+  AvailabilityZonePrivate2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-east-1b   # Changed default AZ for private subnet
+    Description: The availability zone for the second private subnet
+
+  PublicSubnet3CIDR:
+    Type: String
+    Description: CIDR block for the second public subnet
+    Default: 192.168.5.0/24
+  PrivateSubnet3CIDR:
+    Type: String
+    Description: CIDR block for the second private subnet
+    Default: 192.168.6.0/24
+  AvailabilityZonePublic3:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-east-1c   # Changed default AZ for private subnet
+    Description: The availability zone for the second public subnet
+  AvailabilityZonePrivate3:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-east-1c   # Changed default AZ for private subnet
+    Description: The availability zone for the second private subnet
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref VpcName
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PublicSubnetCIDR
+      AvailabilityZone: !Ref AvailabilityZonePublic   # Changed AZ reference
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public Subnet
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PrivateSubnetCIDR
+      AvailabilityZone: !Ref AvailabilityZonePrivate   # Changed AZ reference
+      Tags:
+        - Key: Name
+          Value: Private Subnet
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+
+  PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow traffic in subnets
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - CidrIp: !Ref VpcCIDR
+          IpProtocol: "-1"
+
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow all traffic
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PublicSubnet2CIDR
+      AvailabilityZone: !Ref AvailabilityZonePublic2
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Second Public Subnet
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      AvailabilityZone: !Ref AvailabilityZonePrivate2
+      Tags:
+        - Key: Name
+          Value: Second Private Subnet
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PublicSubnet3CIDR
+      AvailabilityZone: !Ref AvailabilityZonePublic3
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: third Public Subnet
+
+  PublicSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PrivateSubnet3CIDR
+      AvailabilityZone: !Ref AvailabilityZonePrivate3
+      Tags:
+        - Key: Name
+          Value: third Private Subnet
+
+  PrivateSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable
+
+  EKSClusterRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        RoleName: EKSClusterRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: eks.amazonaws.com
+              Action: 'sts:AssumeRole'
+        ManagedPolicyArns:
+          - 'arn:aws:iam::aws:policy/AmazonEKSClusterPolicy'
+          - 'arn:aws:iam::aws:policy/AmazonEKSServicePolicy'
+
+  EKSNodeGroupRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: EKSNodeGroupRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy'
+        - 'arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy'
+        - 'arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'
+  EKSFargateProfileRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: EKSFargateProfileRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks-fargate-pods.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy'
+  EKSFargateRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: EKSFargateRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy'

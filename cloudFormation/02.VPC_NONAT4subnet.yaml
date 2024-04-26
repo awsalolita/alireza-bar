@@ -1,0 +1,154 @@
+Parameters:
+  VpcName:
+    Type: String
+    Description: Name of the VPC
+    Default: MyVPC
+  VpcCIDR:
+    Type: String
+    Description: CIDR block for the VPC
+    Default: 192.168.0.0/16
+  PublicSubnetCIDR:
+    Type: String
+    Description: CIDR block for the public subnet
+    Default: 192.168.1.0/24
+  PrivateSubnetCIDR:
+    Type: String
+    Description: CIDR block for the private subnet
+    Default: 192.168.2.0/24
+  AvailabilityZonePublic:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: The availability zone for the public subnet
+    Default: us-east-1a
+  AvailabilityZonePrivate:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: The availability zone for the private subnet
+    Default: us-east-1a
+
+  PublicSubnet2CIDR:
+    Type: String
+    Description: CIDR block for the second public subnet
+    Default: 192.168.3.0/24
+  PrivateSubnet2CIDR:
+    Type: String
+    Description: CIDR block for the second private subnet
+    Default: 192.168.4.0/24
+  AvailabilityZonePublic2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: The availability zone for the second public subnet
+    Default: us-east-1b
+  AvailabilityZonePrivate2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: The availability zone for the second private subnet
+    Default: us-east-1b
+
+Resources:
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref VpcName
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PublicSubnetCIDR
+      AvailabilityZone: !Ref AvailabilityZonePublic
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public Subnet
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PrivateSubnetCIDR
+      AvailabilityZone: !Ref AvailabilityZonePrivate
+      Tags:
+        - Key: Name
+          Value: Private Subnet
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow all traffic
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PublicSubnet2CIDR
+      AvailabilityZone: !Ref AvailabilityZonePublic2
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Second Public Subnet
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      AvailabilityZone: !Ref AvailabilityZonePrivate2
+      Tags:
+        - Key: Name
+          Value: Second Private Subnet
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
