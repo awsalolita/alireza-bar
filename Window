@@ -1,0 +1,48 @@
+<powershell>
+# Set execution policy
+Set-ExecutionPolicy Unrestricted -Force
+
+# Install IIS Web Server if your app is an IIS-based web app
+Install-WindowsFeature -name Web-Server -IncludeManagementTools
+
+# Download your Go binary from S3
+$ErrorActionPreference = "Stop"
+Import-Module AWSPowerShell
+Read-S3Object -BucketName 'your-bucket-name' -Key 'your-app.exe' -File 'C:\path\to\your-app.exe'
+
+# Alternatively, use Invoke-WebRequest if the file is publicly accessible
+# Invoke-WebRequest -Uri http://example.com/your-app.exe -OutFile C:\path\to\your-app.exe
+
+# Add your application to the startup routine
+$WShell = New-Object -comObject WScript.Shell
+$Shortcut = $WShell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\YourApp.lnk")
+$Shortcut.TargetPath = "C:\path\to\your-app.exe"
+$Shortcut.Save()
+
+# Start your application
+Start-Process "C:\path\to\your-app.exe"
+</powershell>
+Step 2: Launch an EC2 Instance with User-Data
+When you launch your EC2 instance through the AWS Management Console, CLI, or an API:
+
+AWS Management Console:
+Navigate to EC2 service.
+Click “Launch Instance”.
+Select your Windows AMI and instance type.
+Configure instance details. In the “Advanced Details” section at the bottom, paste your PowerShell script into the “User data” field as text.
+Add storage, configure security group (allow HTTP/HTTPS traffic if it's a web server), and select the key pair.
+Review and launch the instance.
+AWS CLI:
+You can also specify user data via the AWS CLI by encoding your script in base64 and including it in the --user-data parameter when running aws ec2 run-instances. Example:
+bash
+Copy code
+aws ec2 run-instances --image-id ami-0abcdef1234567890 --count 1 --instance-type t2.micro --key-name your-key-pair --security-group-ids sg-0123456789abcdef0 --subnet-id subnet-1234abcd --user-data file://path-to-your-script.txt
+Step 3: Test and Verify
+Once your instance is up and running, you should verify:
+
+The application has been downloaded and installed correctly.
+The web server (if applicable) is running and configured correctly.
+Your application starts as expected.
+You can connect to your instance using RDP to check these aspects or automate checks using additional scripts or monitoring tools.
+
+  machine starts. It’s important to secure your scripts and sensitive data (like AWS credentials, if used directly) and to ensure your security groups and network ACLs are properly configured to allow only the necessary t
