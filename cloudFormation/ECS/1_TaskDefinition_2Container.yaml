@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Resources:
+  taskdefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: AppName
+          MountPoints:
+            - SourceVolume: my-vol
+              ContainerPath: "/var/www/my-vol"
+          Image: amazon/amazon-ecs-sample
+          Cpu: 512
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+              Protocol: tcp
+          EntryPoint:
+            - "/usr/sbin/apache2"
+            - "-D"
+            - FOREGROUND
+          Memory: 1024 # mem >= 2 * cpu
+          Essential: true
+          LinuxParameters:
+            InitProcessEnabled: true
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              mode: non-blocking
+              max-buffer-size: 25m
+              awslogs-group: LogGroup
+              awslogs-region: us-east-1
+              awslogs-create-group: "true"
+              awslogs-stream-prefix: first-container
+        - Name: busybox
+          Image: busybox
+          Cpu: 256
+          LinuxParameters:
+            InitProcessEnabled: true
+          EntryPoint:
+            - sh
+            - "-c"
+          Memory: 512
+          Command:
+            - /bin/sh -c "/bin/echo \"hello\n  boi\nnoindentboi\" > config.conf ; sleep 99999"
+          Essential: false
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              mode: non-blocking
+              max-buffer-size: 25m
+              awslogs-group: LogGroup
+              awslogs-region: us-east-1
+              awslogs-create-group: "true"
+              awslogs-stream-prefix: second-container
+
+          # VolumesFrom:
+          #   - SourceContainer: AppName
+      Volumes:
+      ## https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_data_volumes.html
+      ## https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-ecs-taskdefinition-volume.html#cfn-ecs-taskdefinition-volume-efsvolumeconfiguration
+        - EFSVolumeConfiguration: # docker not supported in fargate
+            FilesystemId:  fs-07e7ef1c2881669d4
+            AuthorizationConfig:
+            ## task role
+              IAM: ENABLED
+            RootDirectory: /
+            TransitEncryption: ENABLED
+          Name: my-vol
+      
+      ## both required when using fargate 
+      Cpu: 1024
+      Memory: 2048
+      ## awsvpc for fargate
+      NetworkMode: awsvpc   # host , bridge , none
+    
+      RequiresCompatibilities:
+        - EC2
+        - FARGATE
+      Tags:
+        - Key: environment
+          Value: webserver
+
+
+      ## in the first , like pulling image and stuff 
+      ExecutionRoleArn: arn:aws:iam::654654524843:role/mycluster-ECSTaskExecutionRole-CMoOxSdMiarf
+      ## the app uses this + efs 
+      TaskRoleArn: arn:aws:iam::654654524843:role/mycluster-EcsTaskRole-kZDcxr3XAAj9

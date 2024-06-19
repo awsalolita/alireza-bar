@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Here are some
+  details about
+  the template.
+Parameters:
+  InstanceTypeParameter:
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - m1.small
+      - m1.large
+    Description: Enter type.
+  DBPort: 
+    Default: 3306
+    Description: TCP/IP port for the database
+    Type: Number
+    NoEcho: true
+    MinValue: 1150
+    MaxValue: 65535
+  mySubnetIDs: 
+    Description: Subnet IDs
+    Type: "List<AWS::EC2::Subnet::Id>" #https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html#aws-specific-parameter-types
+
+Mappings: 
+  Mapping01: 
+    Key01: 
+      Name: Value01
+    Key02: 
+      Name: Value02
+    Key03: 
+      Name: Value03
+
+
+
+
+
+Resources:
+  Ec2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceTypeParameter
+      ImageId: !FindInMap
+        - Mapping01
+        - Key01
+        - Name

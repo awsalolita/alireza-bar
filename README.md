@@ -14,3 +14,9 @@ curl -X POST https://d1l77n2boazy2j.cloudfront.net \
 
 
 %s/foo/bar/g
+
+
+cat <<EOF > config.conf
+hello
+   boi
+EOF
