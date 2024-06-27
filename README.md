@@ -20,3 +20,4 @@ cat <<EOF > config.conf
 hello
    boi
 EOF
+https://www.server-world.info/en/
