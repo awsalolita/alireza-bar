@@ -158,3 +158,20 @@ kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.ku
 
 
 # karpenter
+# access to others to see k8s objects in console (Config-Map)
+
+## system:masters (cluster-admin)
+* Create clusterrole , Clusterrolebinding(Group)
+```
+eksctl create iamidentitymapping --arn arn:aws:iam::590183933432:user/arpjoker --group system:masters --cluster jam-cluster
+```
+# Access only via api
+
+* Create ClusterRole , ClusterRoleBinding
+```
+aws eks create-access-entry --cluster-name jam-cluster --principal-arn arn:aws:iam::590183933432:role/myrole --type STANDARD  --kubernetes-groups arpjoker
+```
+# get what iam have access to what
+```
+eksctl get iamidentitymapping --cluster my-cluster --region=region-code
+```
