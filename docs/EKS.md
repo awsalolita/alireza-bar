@@ -1,4 +1,27 @@
 
+# Create Cluster
+```
+eksctl create cluster \
+--name mycluster \
+--nodegroup-name worknodes-1 \
+--node-type t3.medium \
+--nodes 2 \
+--nodes-min 1 \
+--nodes-max 4 \
+--managed \
+--version 1.29 \
+--region ${AWS_DEFAULT_REGION}
+```
+
+# Creating NodeGroups 
+* IAM role for the NodeGroups Must have `Workerrole` , `CNIrole`  , `readonlyECR` and the Trustpolicy for ec2
+```
+aws eks create-nodegroup \
+    --cluster-name eks-lab-cluster \
+    --nodegroup-name worknodes-1 \
+    --subnets "subnet-043290da2540411ed" "subnet-0a61f664f94c79380" "subnet-01bd67b025355e892" --node-role arn:aws:iam::678879639233:role/eksctl-eks-lab-cluster-nodegroup-test2
+```
+
 # start
 * create api and fargate profile as soon as possible
 
@@ -129,7 +152,22 @@ helm repo add app https://aahemm.github.io/helm-microservice
 helm repo update
 helm install app app/app --values ./values.yaml
 ```
-
+# IAM to Deployment
+```
+eksctl create iamserviceaccount \
+    --name iampolicy-sa \
+    --namespace containers-lab \
+    --cluster eks-lab-cluster \
+    --role-name "eksRole4serviceaccount" \
+    --attach-policy-arn arn:aws:iam::$ACCOUNT_NUMBER:policy/eks-lab-read-policy \
+    --approve \
+    --override-existing-serviceaccounts
+```
+```
+kubectl set serviceaccount \
+ deployment eks-lab-deploy \
+ iampolicy-sa -n containers-lab
+```
 
 # EBS CSI driver
 
@@ -174,4 +212,23 @@ aws eks create-access-entry --cluster-name jam-cluster --principal-arn arn:aws:i
 # get what iam have access to what
 ```
 eksctl get iamidentitymapping --cluster my-cluster --region=region-code
+```
+
+# delete cni role after creating SA
+
+```
+ eksctl create iamserviceaccount \
+    --name aws-node \
+    --namespace kube-system \
+    --cluster eks-lab-cluster \
+    --role-name AmazonEKSVPCCNIRole \
+    --attach-policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy \
+    --override-existing-serviceaccounts \
+    --approve
+```
+```
+kubectl delete Pods -n kube-system -l k8s-app=aws-node
+```
+```
+aws iam detach-role-policy --role-name AmazonEKSNodeRole --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
 ```
