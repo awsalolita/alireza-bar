@@ -1,0 +1,79 @@
+Parameters:
+  AMI:
+    Type: String
+    Default: "ami-08a0d1e16fc3f61ea"
+  # VPC:
+  #   Type: List<AWS::EC2::VPC::Id>
+
+  Subnet:
+    Description: Choose only one subnet
+    Type: List<AWS::EC2::Subnet::Id>
+  
+  Instance:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t3.micro
+      - t3.small
+      - t3.medium
+  SG:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+
+
+
+
+
+Resources:
+  MyInstance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: !Ref AMI
+      InstanceType: !Ref Instance
+      SecurityGroupIds: !Ref SG 
+      SubnetId:
+        Fn::Select: [0, !Ref Subnet]
+      IamInstanceProfile: !Ref Profile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+  # MyPolicy:
+  #   PolicyName: arppolicy
+  #   PolicyDocument:
+  #     Version: "2012-10-17"
+  #     Statement:
+  #       - Effect: Allow
+  #         Action:
+  #           - 'cloudformation:Describe*'
+  #           - 'cloudformation:List*'
+  #           - 'cloudformation:Get*'
+  #         Resource: '*'
+  #     Roles:
+  #       - !Ref MyRole
+  MyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: / 
+      RoleName: myssm
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
+  Profile:
+      Type: AWS::IAM::InstanceProfile
+      Properties:
+        InstanceProfileName: ArpInstanceProfile
+        Path: "/"
+        Roles: 
+          - !Ref MyRole

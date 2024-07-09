@@ -1,0 +1,28 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [{
+            "Sid": "Statement1",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::Replace_with_AWS_Account_number:user/USER-A"
+            },
+            "Action": "s3:Get*",
+            "Resource": [
+                "arn:aws:s3:::Replace_with_Bucket_name",
+                "arn:aws:s3:::Replace_with_Bucket_name/*"
+            ]
+        },
+        {
+            "Sid": "Statement2",
+            "Effect": "Deny",
+            "Principal": {
+                "AWS": "arn:aws:iam::Replace_with_AWS_Account_number:user/USER-B"
+            },
+            "Action": "s3:Get*",
+            "Resource": [
+                "arn:aws:s3:::Replace_with_Bucket_name",
+                "arn:aws:s3:::Replace_with_Bucket_name/*"
+            ]
+        }
+    ]
+}

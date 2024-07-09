@@ -25,3 +25,10 @@ for bucket in $buckets; do
     done
 done
 
+# custom kms
+# aws --endpoint-url https://s3.$lab_region.amazonaws.com s3api put-object \
+# --bucket $lab_bucket \
+# --body object02.txt \
+# --key task4_object.txt \
+# --server-side-encryption aws:kms \
+# --ssekms-key-id $kms_green_key_id

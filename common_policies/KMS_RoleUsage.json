@@ -1,0 +1,12 @@
+{
+    "Sid": "Allow to encrypt/decrypt using the key",
+    "Effect": "Allow",
+    "Principal": {
+        "AWS": "<RoleArn>"
+    },
+    "Action": [
+        "kms:DescribeKey",
+        "kms:Decrypt"
+    ],
+    "Resource": "*"
+}
