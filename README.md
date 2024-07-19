@@ -21,3 +21,16 @@ hello
    boi
 EOF
 https://www.server-world.info/en/
+
+
+```
+
+{
+  "name": "John",
+  "age": 30,
+  "city": "New York"
+}
+name=$(echo "$json" | grep -o '"name": *"[^"]*' | sed 's/"name": *"//')
+age=$(echo "$json" | grep -o '"age": *[0-9]*' | sed 's/"age": *//')
+
+```

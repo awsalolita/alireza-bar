@@ -1,7 +1,9 @@
 * create iam role and change trustpolicy for rds
 * attach role to neptune cluster 
 * export url=neptune-cluster.cluster-cqdnibzb3baa.us-east-1.neptune.amazonaws.com:8182
-* curl -X POST -H 'Content-Type: application/json' \https://$url/loader -d'
+* 
+```
+curl -X POST -H 'Content-Type: application/json' \https://$url/loader -d'
 {
 "source": "s3://<BUCKET_NAME>/neptune-data.rdf",
 "format": "ntriples",
@@ -11,6 +13,7 @@
 "parallelism": "MEDIUM",
 "queueRequest": "TRUE"
 }'
+```
 
 * Copy the loadID (from the 200 OK message) and monitor the progress of the job using the loadID:
 

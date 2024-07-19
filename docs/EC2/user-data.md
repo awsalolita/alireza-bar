@@ -1,8 +1,9 @@
+# Debug
 * user-data , after modules:final there is the log for user-data
 ```
 cat /var/log/cloud-init-output.log | grep -iA 20  modules:final
 ```
-
+# nginx
 * return text in nginx 
 ```
 location /health/startup {
@@ -28,6 +29,8 @@ server {
 
 
 
+
+# setup user for ssh
 * ubuntu and amazon linux 
 ```
 #!/bin/bash
@@ -68,14 +71,8 @@ echo "SSH password authentication enabled only for user $username."
 echo "User $username has been granted full root access without requiring a password."
 
 ```
-* deprecated for me
-```
-#!/bin/bash
-sed -i 's/^PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
-service sshd restart
-useradd arpjoker
-echo 'arpjoker:arpjoker' | chpasswd
-usermod -aG wheel arpjoker
-echo 'arpjoker ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/arpjoker
-chmod 0440 /etc/sudoers.d/arpjoker
-```
+
+# Make Service
+[systemd](../../ec2_before_script/service.sh)
+
+#

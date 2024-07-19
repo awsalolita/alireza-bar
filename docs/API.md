@@ -1,8 +1,19 @@
+# Api Key
 * api key
 ```
 curl -H "x-api-key: AQiTWLjMXvS4MRboF4Kp7N7VxrGjOYgi"
 ```
 
+# nlb for private
+* private
+* need vpc endpoint
+* api key
+* vpc link needs NLB
+* in nlb untick the inforce privatelink sg
+
+# Path
+* override the path
+# Security
 restrict
 * resource policy example
 * can enable iam as well
@@ -37,3 +48,46 @@ restrict
   ]
 }
 ```
+
+* request API without sigv4
+```python
+def call_api(api_id: str, api_key=None): 
+    host = api_id+'.execute-api.'+region+'.amazonaws.com'
+    base_url = f'https://{host}/api'
+    get_url = f'{base_url}/{os.environ["api_resource"]}'
+
+    response = requests.get(get_url, headers={'x-api-key': api_key}, timeout=2)
+    return response
+```
+* request API with sigv4 (iam auth)
+```python
+# Simplifies making Amazon SigV4 calls with the python requests library
+from aws_requests_auth.boto_utils import BotoAWSRequestsAuth
+
+def call_api(api_id: str, api_key=None): 
+    host = api_id+'.execute-api.'+region+'.amazonaws.com'
+    base_url = f'https://{host}/api'
+    get_url = f'{base_url}/{os.environ["api_resource"]}'
+
+    # Get authentication token - SigV4
+    auth = BotoAWSRequestsAuth(aws_host=host, aws_region=region, aws_service='execute-api')
+    response = requests.get(get_url, headers={'x-api-key': api_key}, timeout=2, auth=auth)
+    return response
+```
+
+
+# QueryStringParameter
+* add them in the method request
+* in Integration Request add mapping template `application/json`
+```
+{
+  "name" : "$input.params('<querystring>')"
+}
+```
+
+# Lambda
+* when you enabled lambda proxy integration
+	* you get pathparameters and such
+* but when you dont you only get the body that you send
+# CORS
+* Enable access from another hostname 
