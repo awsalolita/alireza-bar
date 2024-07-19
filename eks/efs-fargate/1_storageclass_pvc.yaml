@@ -3,13 +3,18 @@ kind: StorageClass
 metadata:
   name: efs-sc
 provisioner: efs.csi.aws.com
-
+mountOptions:
+ - tls
+ - iam
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: efs-pv
 spec:
+  # rm this when not using anything else
+  mountOptions:
+    - iam
   capacity:
     storage: 5Gi
   volumeMode: Filesystem
