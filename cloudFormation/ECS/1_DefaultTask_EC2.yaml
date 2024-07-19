@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Resources:
+  taskdefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: nginxapp
+          Image: nginx:alpine
+          Cpu: 512
+          PortMappings:
+            - Name: mynginx
+              ContainerPort: 80
+              HostPort: 0
+              Protocol: http
+          Memory: 1024 # mem >= 2 * cpu
+          Essential: true
+          LinuxParameters:
+            InitProcessEnabled: true
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              mode: non-blocking
+              max-buffer-size: 25m
+              awslogs-group: /ecs/NginxApp
+              awslogs-region: us-east-1
+              awslogs-create-group: "true"
+              awslogs-stream-prefix: first-container
+
+      
+      ## both required when using fargate 
+      Cpu: 512
+      Memory: 1024
+      ## awsvpc for fargate
+      NetworkMode: bridge   # host , bridge , none
+    
+      RequiresCompatibilities:
+        - EC2
+        # - FARGATE
+      Tags:
+        - Key: app
+          Value: nginx
+
+
+      ## in the first , like pulling image and stuff 
+      # ExecutionRoleArn: arn:aws:iam::654654524843:role/mycluster-ECSTaskExecutionRole-CMoOxSdMiarf
+      # ## the app uses this + efs 
+      # TaskRoleArn: arn:aws:iam::654654524843:role/mycluster-EcsTaskRole-kZDcxr3XAAj9

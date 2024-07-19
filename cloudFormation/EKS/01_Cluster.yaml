@@ -1,0 +1,31 @@
+Parameters:
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: List of subnet IDs where the EC2 instances will be launched
+  ClusterSg:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: SG for eks Cluster
+  ClusterName:
+    Type: String
+    Default: "mycluster"
+Resources:
+  EKSCluster:
+      Type: AWS::EKS::Cluster
+      Properties:
+        Name: !Ref ClusterName
+        Version: 1.29
+        RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ArpEKSClusterRole"
+        ResourcesVpcConfig:
+          SecurityGroupIds: !Ref ClusterSg
+          SubnetIds: !Ref SubnetIds
+          EndpointPublicAccess: false
+          EndpointPrivateAccess: true
+          PublicAccessCidrs: [ "188.121.156.204/32" ]
+        Logging:
+          ClusterLogging:
+            EnabledTypes:
+              - Type: api
+              - Type: audit
+        Tags:
+          - Key: "name"
+            Value: "mycluster"

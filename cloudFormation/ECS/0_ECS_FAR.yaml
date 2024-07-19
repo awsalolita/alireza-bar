@@ -3,7 +3,7 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: MyFargateCluster
+      ClusterName: mycluster
       CapacityProviders:
         - FARGATE
         # - FARGATE_SPOT
@@ -15,6 +15,9 @@ Resources:
       Configuration:
         ExecuteCommandConfiguration:
           Logging: DEFAULT
+  
+
+  
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -31,25 +34,23 @@ Resources:
     # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-iam-awsmanpol.html#security-iam-awsmanpol-AmazonECSTaskExecutionRolePolicy
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-  ECSEXECTASKPOLICY: 
+
+  EcsTaskExecutionPolicy: 
     Type: "AWS::IAM::Policy"
     Properties: 
-      PolicyName: "EcsExecArp"
+      PolicyName: ECSCreateLogGroup
       PolicyDocument: 
         Version: "2012-10-17"
         Statement: 
           - Effect: "Allow"
             Action: 
-              - "ssmmessages:CreateControlChannel"
-              - "ssmmessages:CreateDataChannel"
-              - "ssmmessages:OpenControlChannel"
-              - "ssmmessages:OpenDataChannel"
-              - "logs:CreateLogGroup"
-              - "logs:CreateLogStream"
-              - "logs:PutLogEvents"
+              - 'logs:CreateLogGroup'
             Resource: "*"
       Roles: 
         - !Ref ECSTaskExecutionRole
+
+
+
   EcsTaskRole: 
     Type: "AWS::IAM::Role"
     Properties: 
@@ -63,6 +64,8 @@ Resources:
             Action: 
               - "sts:AssumeRole"
       Path: "/" 
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore'
   EcsTaskPolicy: 
     Type: "AWS::IAM::Policy"
     Properties: 
@@ -73,6 +76,9 @@ Resources:
           - Effect: "Allow"
             Action: 
               - "ssmmessages:CreateDataChannel"
+              - "ssmmessages:CreateDataChannel"
+              - "ssmmessages:OpenControlChannel"
+              - "ssmmessages:OpenDataChannel"
             Resource: "*"
       Roles: 
         - !Ref EcsTaskRole

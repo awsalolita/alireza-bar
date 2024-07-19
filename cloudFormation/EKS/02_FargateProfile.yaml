@@ -1,0 +1,22 @@
+Parameters:
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: List of subnet IDs where the EC2 instances will be launched
+  ClusterName:
+    Type: String
+    Default: "mycluster"
+  ProfileName:
+    Type: String
+    Default: "my-fargate-profile"
+
+Resources:
+  EKSFargateProfile:
+    Type: 'AWS::EKS::FargateProfile'
+    Properties:
+      FargateProfileName: !Ref ProfileName
+      ClusterName: !Ref ClusterName
+      PodExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/AmazonEKSFargatePodExecutionRole'
+      Subnets: !Ref SubnetIds
+      Selectors:
+        - Namespace: kube-system
+        - Namespace: default

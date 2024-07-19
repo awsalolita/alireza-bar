@@ -1,0 +1,22 @@
+Parameters:
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: List of subnet IDs where the EC2 instances will be launched
+  ClusterName:
+    Type: String
+    Default: "mycluster"
+
+
+Resources:
+  EKSNodegroup:
+    Type: 'AWS::EKS::Nodegroup'
+    Properties:
+      ClusterName: !Ref ClusterName
+      NodeRole: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ArpEksEc2NodeGroupRole'
+      ScalingConfig:
+        MinSize: 1
+        DesiredSize: 2
+        MaxSize: 3
+      Labels:
+        EksCluster : !Ref ClusterName
+      Subnets: !Ref SubnetIds
