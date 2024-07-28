@@ -4,7 +4,7 @@
 
 global:
   ## If you use `deployment: false` (meaning you are using StatefulSet) set this to 1 or 0 
-  replicaCount: 1
+  replicaCount: 3
   environment: {}
    # list of key: value
    # GLOBAL1: value
@@ -107,13 +107,13 @@ updateStrategy: {}
   
  
 volumes:
-  enabled: false
+  enabled: true
   pvc:
-    enabled: false
+    enabled: true
 
     ## if this is not null the name will be 
     ## ignored and no pvc will be created  
-    existingClaim: null 
+    existingClaim: efs-claim # GIVE YOUR PVC NAME 
     name: efs-claim
     mountPath: /pv
     # if subPath is used mountPath must be empty 
@@ -201,13 +201,13 @@ tolerations: []
 
 affinity: {}
 
-resources: {}
-  # limits:
-  #   cpu: 100m
-  #   memory: 200Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 200Mi
+resources: 
+  limits:
+    cpu: 300m
+    memory: 300Mi
+  requests:
+    cpu: 200m
+    memory: 200Mi
 
 podSecurityContext: {}
   # fsGroup: 2000

@@ -1,3 +1,4 @@
+# dms with secretmanager in another account
 * for multiple account , the other secret must use cutomer managed kms key
 
 * aurora secret manager doesnt have host and port  , create one
@@ -108,3 +109,6 @@ ADMIN.PERSON
             }
         }
 ```
+# dms to s3
+* DataFormat settings `parquet`
+* admin and root user ok for s3

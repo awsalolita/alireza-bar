@@ -22,7 +22,7 @@ Parameters:
   AvailabilityZonePrivate:
     Type: AWS::EC2::AvailabilityZone::Name
     Description: The availability zone for the private subnet
-    Default: us-east-1b   # Changed default AZ for private subnet
+    Default: us-east-1a   # Changed default AZ for private subnet
 
 Resources:
   MyVPC:

@@ -1,5 +1,5 @@
 
-# Create Cluster
+# 0 Create Cluster
 ```
 eksctl create cluster \
 --name mycluster \
@@ -13,7 +13,7 @@ eksctl create cluster \
 --region ${AWS_DEFAULT_REGION}
 ```
 
-# Creating NodeGroups 
+# 1 Creating NodeGroups 
 * IAM role for the NodeGroups Must have `Workerrole` , `CNIrole`  , `AmazonEC2ContainerRegistryReadOnly` and the Trustpolicy for ec2
 ```
 aws eks create-nodegroup \
@@ -24,7 +24,7 @@ aws eks create-nodegroup \
 # eks nodegroups
 * 
 
-# Kubeconfig and Rollout coredns
+# 2 Kubeconfig and Rollout coredns
 * create api and fargate profile as soon as possible
 * access the cluster with cloudshell 
 ```
@@ -33,11 +33,11 @@ kubectl rollout restart -n kube-system deployment coredns
 ```
 
 
-# IAM OIDC provider
+# 3 IAM OIDC provider
 * create one to use iam with your cluster
 * check if you have one
 ```
-cluster_name=k8s
+cluster_name=mycluster
 oidc_id=$(aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)
 aws iam list-open-id-connect-providers | grep $oidc_id | cut -d "/" -f4
 
@@ -45,7 +45,7 @@ aws iam list-open-id-connect-providers | grep $oidc_id | cut -d "/" -f4
 
 * setup (install eksctl before)
 ```
-cluster_name=k8s
+cluster_name=mycluster
 oidc_id=$(aws eks describe-cluster --name $cluster_name --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)
 eksctl utils associate-iam-oidc-provider --cluster $cluster_name --approve
 
@@ -59,7 +59,7 @@ eksctl utils associate-iam-oidc-provider --cluster $cluster_name --approve
 
 
 
-# install ingress controller 
+# 4 install ingress controller 
 * ing controller
 * create policy , role and sa 
 ```
@@ -95,7 +95,7 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
 #  --set vpcId=vpc-xxxxxxxx \
 #  --set region=region-code \
 ```
-# setup ingress 
+## setup ingress 
 * tag the subnets 
 * for internet facing , tag subnet
 ```
@@ -128,19 +128,19 @@ eksctl create iamserviceaccount --name my-service-account --namespace default --
 ``` 
 * use the sa in your deployment
 
-# helm chart
+# 5 helm chart
 
 ```
 helm repo add app https://aahemm.github.io/helm-microservice
 helm repo update
 helm install app app/app --values ./values.yaml
 ```
-# IAM to Deployment
+# 4.5 IAM to SA
 ```
 eksctl create iamserviceaccount \
     --name iampolicy-sa \
-    --namespace containers-lab \
-    --cluster eks-lab-cluster \
+    --namespace default \
+    --cluster mycluster \
     --role-name "eksRole4serviceaccount" \
     --attach-policy-arn arn:aws:iam::$ACCOUNT_NUMBER:policy/eks-lab-read-policy \
     --approve \
@@ -160,7 +160,7 @@ kubectl set serviceaccount \
 * this is iam role for csi driver , policy: `AmazonEFSCSIDriverPolicy` , [trustpolicy](../../common_policies/EfsEKS_truspolicy.json)
 * create a role 
 ```bash
-export cluster_name=my-cluster
+export cluster_name=mycluster
 export role_name=AmazonEKS_EFS_CSI_DriverRole
 eksctl create iamserviceaccount \
     --name efs-csi-controller-sa \
@@ -178,7 +178,11 @@ aws iam update-assume-role-policy --role-name $role_name --policy-document "$TRU
 * add aws add-on for efs to deploy the pods for it
 * dont create CSI driver (for ec2) and create storage class [file](../eks/efs-fargate/)
 ### Restric anonymous
-* for csi role give access
+EC2    
+* for the `role` used for the csi driver give access
+* pv and sc with iam mountoption
+EFS
+* for the `podexecutionrol` give access
 * pv and sc with iam mountoption
 
 ## Fargate EFS

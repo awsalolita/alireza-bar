@@ -32,3 +32,22 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy
+
+# Logging for fargate
+  AwsLoggingPolicy: 
+    Type: "AWS::IAM::Policy"
+    Properties: 
+      PolicyName: "AwsLogging"
+      PolicyDocument: 
+        Version: "2012-10-17"
+        Statement: 
+          - Effect: "Allow"
+            Action: 
+              - "logs:CreateLogStream"
+              - "logs:CreateLogGroup"
+              - "logs:DescribeLogStreams"
+              - "logs:PutLogEvents"
+              - "logs:PutRetentionPolicy"
+            Resource: "*"
+      Roles: 
+        - Ref: "EksFargatePodExecutionRole"

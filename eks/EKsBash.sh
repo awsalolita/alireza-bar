@@ -22,6 +22,7 @@ sudo mv /tmp/eksctl /usr/local/bin
 #  aws eks update-kubeconfig --region region-code --name my-cluster
 # kubectl rollout restart -n kube-system deployment coredns
 
+echo "alias kd='kubectl describe'" >> ~/.bashrc
 echo "alias kg='kubectl get'" >> ~/.bashrc
 echo "alias kgp='kubectl get pods'" >> ~/.bashrc
 echo "alias kdp='kubectl describe pods'" >> ~/.bashrc

@@ -34,3 +34,5 @@ name=$(echo "$json" | grep -o '"name": *"[^"]*' | sed 's/"name": *"//')
 age=$(echo "$json" | grep -o '"age": *[0-9]*' | sed 's/"age": *//')
 
 ```
+
+* [scenario](./ecommerce_app) for redis, mysql

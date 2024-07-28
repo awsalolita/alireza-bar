@@ -75,4 +75,7 @@ echo "User $username has been granted full root access without requiring a passw
 # Make Service
 [systemd](../../ec2_before_script/service.sh)
 
-#
+# recover wordpress
+```
+sed "20i  define( 'WP_HOME', 'http://myWPAppALB-1365555772.us-west-2.elb.amazonaws.com' );\ndefine( 'WP_SITEURL', 'http://myWPAppALB-1365555772.us-west-2.elb.amazonaws.com' );" wp-config-sample.php
+```

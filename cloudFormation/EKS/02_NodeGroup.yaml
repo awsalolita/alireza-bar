@@ -5,7 +5,15 @@ Parameters:
   ClusterName:
     Type: String
     Default: "mycluster"
-
+  MinNodes:
+    Type: Number
+    Default: 2
+  DesireNodes:
+    Type: Number
+    Default: 3
+  MaxNodes:
+    Type: Number
+    Default: 5  
 
 Resources:
   EKSNodegroup:
@@ -14,9 +22,9 @@ Resources:
       ClusterName: !Ref ClusterName
       NodeRole: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ArpEksEc2NodeGroupRole'
       ScalingConfig:
-        MinSize: 1
-        DesiredSize: 2
-        MaxSize: 3
+        MinSize: !Ref MinNodes
+        DesiredSize: !Ref DesireNodes
+        MaxSize: !Ref MaxNodes
       Labels:
         EksCluster : !Ref ClusterName
       Subnets: !Ref SubnetIds
