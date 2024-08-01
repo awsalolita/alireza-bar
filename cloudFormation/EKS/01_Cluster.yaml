@@ -12,20 +12,53 @@ Resources:
   EKSCluster:
       Type: AWS::EKS::Cluster
       Properties:
+        AccessConfig:
+            AuthenticationMode: API_AND_CONFIG_MAP
+            BootstrapClusterCreatorAdminPermissions: true
         Name: !Ref ClusterName
         Version: 1.29
         RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ArpEKSClusterRole"
         ResourcesVpcConfig:
           SecurityGroupIds: !Ref ClusterSg
           SubnetIds: !Ref SubnetIds
-          EndpointPublicAccess: false
+          EndpointPublicAccess: true
           EndpointPrivateAccess: true
-          PublicAccessCidrs: [ "188.121.156.204/32" ]
+          #PublicAccessCidrs: [ "188.121.156.204/32" ]
         Logging:
           ClusterLogging:
             EnabledTypes:
               - Type: api
               - Type: audit
+              - Type: authenticator
+              - Type: controllerManager
+              - Type: scheduler
         Tags:
           - Key: "name"
             Value: "mycluster"
+  VpcCni:  
+    Type: AWS::EKS::Addon
+    DependsOn: EKSCluster
+    Properties:
+      ClusterName: !Ref ClusterName
+      AddonName: vpc-cni
+  
+  CoreDNS:  
+    Type: AWS::EKS::Addon
+    DependsOn: EKSCluster
+    Properties:
+      ClusterName: !Ref ClusterName
+      AddonName: coredns
+   
+  KubeProxy:  
+    Type: AWS::EKS::Addon
+    DependsOn: EKSCluster
+    Properties:
+      ClusterName: !Ref ClusterName
+      AddonName: kube-proxy
+  # you delete it to use IRSA
+  PodIdentityAgent:  
+    Type: AWS::EKS::Addon
+    DependsOn: EKSCluster
+    Properties:
+      ClusterName: !Ref ClusterName
+      AddonName: eks-pod-identity-agent

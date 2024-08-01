@@ -1,0 +1,55 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: kedahpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ui
+  pollingInterval: 30 # default is 30
+  cooldownPeriod: 300 # default is 300
+  minReplicaCount: 1  # default is 0
+  maxReplicaCount: 10 # default is 100
+  triggers:
+    - type: aws-cloudwatch
+      metadata:
+        namespace: AWS/ApplicationELB
+        # change TARGETGROUP_ID-> arn with targetgroup/XXXX
+        # ALB_ID -> arn after loadbalancer/
+        # AWS_REGION 
+        expression: SELECT COUNT(RequestCountPerTarget) FROM SCHEMA("AWS/ApplicationELB", LoadBalancer, TargetGroup) WHERE TargetGroup = '${TARGETGROUP_ID}' AND LoadBalancer = '${ALB_ID}'
+        metricStat: Sum
+        metricStatPeriod: "60"
+        metricUnit: Count
+        targetMetricValue: "100"
+        minMetricValue: "0"
+        awsRegion: "${AWS_REGION}"
+        identityOwner: operator
+
+# apiVersion: keda.sh/v1alpha1
+# kind: ScaledObject
+# metadata:
+#   name: kedahpa
+# spec:
+#   scaleTargetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: app
+#   pollingInterval: 30 # default is 30
+#   cooldownPeriod: 300 # default is 300
+#   minReplicaCount: 1  # default is 0
+#   maxReplicaCount: 10 # default is 100
+#   triggers:
+#     - type: aws-cloudwatch
+#       metadata:
+#         namespace: AWS/ApplicationELB
+#         # change TARGETGROUP_ID, ALB_ID, AWS_REGION
+#         expression: SELECT COUNT(RequestCountPerTarget) FROM SCHEMA("AWS/ApplicationELB", LoadBalancer, TargetGroup) WHERE TargetGroup = 'targetgroup/k8s-default-appsvcwe-3a73f2be6b/24a8d3ad97fefcc8' AND LoadBalancer = 'app/k8s-mygroup-e7e1deb945/97e6428506a328fd'
+#         metricStat: Sum
+#         metricStatPeriod: "60"
+#         metricUnit: Count
+#         targetMetricValue: "100"
+#         minMetricValue: "0"
+#         awsRegion: "us-east-1"
+#         identityOwner: operator

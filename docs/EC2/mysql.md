@@ -1,11 +1,21 @@
 
 
-* install mysql
+# install mysql
 ```
 sudo yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
 rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
 sudo yum install -y mysql-community-client
 ```
+# create user and grant all
+```
+mysql -h  -u root -p
+CREATE USER 'test'@'%' IDENTIFIED BY 'ooVsRCalC5&U1';
+GRANT REPLICATION CLIENT  ON unicorndb.* TO 'test'@'%';
+GRANT REPLICATION SLAVE ON unicorndb.* TO 'test'@'%';
+GRANT ALL PRIVILEGES ON unicorndb.* TO 'test'@'%';
+```
+
+
 * then start it
 * then get the temp password from log file
 * change user root , localhost password 

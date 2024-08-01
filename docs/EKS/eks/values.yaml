@@ -4,7 +4,7 @@
 
 global:
   ## If you use `deployment: false` (meaning you are using StatefulSet) set this to 1 or 0 
-  replicaCount: 3
+  replicaCount: 1
   environment: {}
    # list of key: value
    # GLOBAL1: value
@@ -19,8 +19,8 @@ hostNetwork: false
 
 ## Set default image, imageTag, and imagePullPolicy.
 image:
-  repository: "905418442480.dkr.ecr.us-east-1.amazonaws.com/nginxmod"
-  tag: "latest"
+  repository: ""
+  tag: ""
   pullPolicy: IfNotPresent
 
   #replicaCount: 1
@@ -107,7 +107,8 @@ updateStrategy: {}
   
  
 volumes:
-  enabled: true
+  # first without efs
+  enabled: false
   pvc:
     enabled: true
 
@@ -182,6 +183,8 @@ ingress:
     # when using fargate or use service nodeport
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/group.order: '1'
+    # status code for health check
+    #alb.ingress.kubernetes.io/success-codes: '200,404'
     
   hosts:
     - host: arp.com # remove it if you dont have domain

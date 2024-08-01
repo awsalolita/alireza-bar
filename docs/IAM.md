@@ -25,3 +25,37 @@ aws iam update-assume-role-policy  \
     --role-name eksctl-eks-lab-cluster-nodegroup-test \
     --policy-document file://test.json
 ```
+
+# iam policy that grants creating iam policies
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "iam:CreateInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile",
+                "iam:AddRoleToInstanceProfile",
+                "iam:PassRole",
+                "iam:DeleteInstanceProfile"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}
+```
+# iam policy for creating eks resources
+```
+ # creating policy
+ iam:CreatePolicy
+ # creating ServiceAccount with eksctl
+ iam:GetOpenIDConnectProvider
+ cloudformation:*
+ iam:GetRole
+ iam:DetachRolePolicy
+ iam:CreateRole
+ iam:TagRole
+ iam:DeleteRole
+iam:AttachRolePolicy
+```

@@ -41,12 +41,34 @@ echo "export KUBE_EDITOR='vim'" >> ~/.bashrc
 
 
 # install aws cli
-sudo apt update 
-sudo apt install unzip -y
 
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
+read -p "Do you want to install AWS CLI? (y/n): " install_aws
+if [[ "$install_aws" == "y" || "$install_aws" == "Y" ]]; then
+    # Download and install AWS CLI
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+    echo "AWS CLI installed successfully."
+else
+    echo "AWS CLI installation skipped."
+fi
+
+read -p "Do you want to install go ? (y/n): " install_go
+if [[ "$install_go" == "y" || "$install_go" == "Y" ]]; then
+    # Download and install AWS CLI
+    wget https://go.dev/dl/go1.22.5.linux-amd64.tar.gz
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go1.22.5.linux-amd64.tar.gz
+    rm go1.22.5.linux-amd64.tar.gz
+    export PATH=$PATH:/usr/local/go/bin
+else
+    echo "go installation skipped."
+fi
 
 
 curl -sS https://webinstall.dev/k9s | bash
+
+sudo rm -r aws*
+sudo rm -r kubectl
+sudo rm -r get_helm.sh
+sudo rm -r Downloads
+

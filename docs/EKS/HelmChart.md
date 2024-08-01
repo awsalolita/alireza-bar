@@ -5,8 +5,7 @@
 
 ```
 helm repo add app https://aahemm.github.io/helm-microservice
-helm install microservice app/app --values values.yml --version 0.10.0
-helm upgrade --install test --values values.yml app/app
+helm upgrade --install app --values values.yaml app/app --version 0.10.0
 ```
 # HPA
 

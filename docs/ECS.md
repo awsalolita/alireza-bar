@@ -106,5 +106,5 @@ CMD-SHELL, curl -f http://localhost/ || exit 1
 ```
 
 # EBS
-* Create A role with ecs `trustpolicy` and *Infra* roles 
+* Create A role with ecs `trustpolicy` and `*Infra*` roles 
 * T2 instances CANNOT Attach ebs
