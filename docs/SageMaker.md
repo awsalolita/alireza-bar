@@ -31,7 +31,7 @@ adult_df.limit(5).toPandas()
 * in sagemaker studio , ipynb files 
 * train , built in
 * estimator -> image , role, bucket
-```
+```python
 xgb_model = sagemaker.estimator.Estimator(
     image_uri = container,
     role = role, 
@@ -45,7 +45,7 @@ xgb_model = sagemaker.estimator.Estimator(
 )
 ```
 * hyperParameters , training parameters
-```
+```python
 xgb_model.set_hyperparameters(
     max_depth = 5,
     eta = 0.2,
@@ -57,6 +57,62 @@ xgb_model.set_hyperparameters(
     num_round = 800
 )
 ```
+* deploy
+```python
+xgb_predictor = xgb.deploy(
+    initial_instance_count=1, instance_type="ml.m4.xlarge", serializer=CSVSerializer()
+)
+```
+### run shell commands
+* add !
+```bash
+!mkdir data
+```
+### Sentiment job with MXNet, 
+```python
+from sagemaker import get_execution_role
+from sagemaker.mxnet import MXNet
+m = MXNet(
+    "sentiment.py",
+    role=get_execution_role(),
+    instance_count=1,
+    instance_type="ml.m4.xlarge",
+    framework_version="1.8.0",
+    py_version="py37",
+    distribution={"parameter_server": {"enabled": True}},
+    hyperparameters={
+        "batch-size": 8,
+        "epochs": 2,
+        "learning-rate": 0.01,
+        "embedding-size": 50,
+        "log-interval": 1000,
+    },
+)
+predictor = m.deploy(initial_instance_count=1, instance_type="ml.m4.xlarge")
+data = [
+    "this movie was extremely good .",
+    "the plot was very boring .",
+    "this film is so slick , superficial and trend-hoppy .",
+    "i just could not watch it till the end .",
+    "the movie was so enthralling !",
+]
+response = predictor.predict(data)
+print(response)
+```
 
-
-
+### Invoking an endpoint
+```python
+import io
+import boto3
+import csv
+test_file = io.StringIO('["The movie was horrible","This should be awarded an Oscar","I did not like the ending"]')
+client = boto3.client('sagemaker-runtime')
+payload = test_file.getvalue()
+response = client.invoke_endpoint(
+  EndpointName=ENDPOINT_NAME,
+  ContentType='text/csv',
+  Body=payload,
+  Accept='Accept'
+  )
+prediction = response['Body'].read().decode('utf-8')
+```

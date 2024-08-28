@@ -3,4 +3,7 @@
 ### POST link, Download&Resize image
 link in the `event`     
 [Lambda](./sendfile_resizeImage.py)
-### 
+### get query parameters
+```python
+event['queryStringParameters']['TheFuckingParameter']
+```

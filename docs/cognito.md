@@ -1,7 +1,16 @@
 # Identity Pool to User Pool
 * create a `user pool` and a user inside it , then create `identity pool` for connecting them to iam 
-* enable `AuthFlows`
+* enable `Authentication flows` in the app client settings
 * there are attributes for a user like the group that the user is in to choose iam based on them
+
+
+### When Creating custom attributes
+* enable `read write permissions` for the app client 
+### Hosted sign-up and sign-in pages
+* give url callback
+* `OAuth 2.0 grant types` `OpenID Connect scopes`
+### Cognito domain
+
 ### Admin user and creating custom principles(Claims)
 * Creating Admin user 
 ```python
@@ -23,7 +32,9 @@ response = client.admin_initiate_auth(UserPoolId='us-east-1_4Uq9pgWp1' ,
        'USERNAME': 'arpjoker2',
         'PASSWORD': '12345678'
         })
+# You can use this for apigateway
 id_token = response['AuthenticationResult']['IdToken']
+
 ```
 * Create Custom Claims (`custom:rank` here)
 ```python
@@ -96,7 +107,27 @@ response = s3.list_buckets()
 print(response)
 ```
 
+# lambda trigger
+* trigger lambda on `pre sign up` to confirm the email
+* example:
+```python
+import json
 
+def lambda_handler(event, context):
+    # Confirm the user
+    event['response']['autoConfirmUser'] = True
+
+    # Set the email as verified if it is in the request
+    if 'email' in event['request']['userAttributes']:
+        event['response']['autoVerifyEmail'] = True
+
+    # Set the phone number as verified if it is in the request
+    if 'phone_number' in event['request']['userAttributes']:
+        event['response']['autoVerifyPhone'] = True
+
+    # Return to Amazon Cognito
+    return event
+```
 
 # using on alb
 * with LB
@@ -105,7 +136,7 @@ print(response)
 ```
 
 * trust policy for the role
-```
+```json
 {
     "Version": "2012-10-17",
     "Statement": [

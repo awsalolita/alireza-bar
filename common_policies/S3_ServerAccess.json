@@ -1,0 +1,20 @@
+{
+    "Version": "2012-10-17",
+    "Id": "S3-Console-Auto-Gen-Policy-1724559414858",
+    "Statement": [
+        {
+            "Sid": "S3PolicyStmt-DO-NOT-MODIFY-1724559414518",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "logging.s3.amazonaws.com"
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::log-963696553638-931/*",
+            "Condition": {
+                "StringEquals": {
+                    "aws:SourceAccount": "963696553638"
+                }
+            }
+        }
+    ]
+}

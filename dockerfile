@@ -1,6 +1,6 @@
 # arpjoker/awssecret 
-FROM python:alpine                                                                                                                                                                            
-
+# alpine:3.14
+FROM python:alpine
 RUN mkdir /app
 
 COPY requirements.txt /app

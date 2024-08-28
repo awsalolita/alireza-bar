@@ -13,7 +13,7 @@ obj = s3.Object(bucket_name , filename)
 body = obj.get()['Body'].read().decode("utf-8")
 ```
 ### ReadObject Json
-* [here](SelectObjectSql.py)
+* [here](./SelectObjectSql.py)
 ### ReadObject SQL CSV
 ```python
 resp = s3.select_object_content(

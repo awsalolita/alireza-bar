@@ -24,6 +24,11 @@ docker run -e AWS_ACCESS_KEY_ID=AKIAQ3EGS4QEHXIY6S2X -e AWS_SECRET_ACCESS_KEY=UR
 	]
 }
 ```
+# secret manager permissions
+* `GetSecretValue` `DescribeSecret`
+# ssm parameter store permissions
+* `ssm:GetParameters`
+
 
 # eks
 ## AppConfig
@@ -43,3 +48,7 @@ containers:
 ```
 
 * `curl "http://localhost:2772/applications/myapp/environments/myenv/configurations/myconfig" > server.ini` in cmd too
+
+
+# give access to another account 
+[in dms](./DMS.md)

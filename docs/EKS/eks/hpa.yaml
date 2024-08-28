@@ -1,8 +1,22 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: php-apache
+  name: myhpa
 spec:
+  behavior:
+    scaleDown:
+      # waits for the metric to get bellow the target
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 90
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment

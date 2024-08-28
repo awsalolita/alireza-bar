@@ -26,3 +26,7 @@ drop tcp any any <> any 443 (msg:"SURICATA Port 443 but not TLS"; flow:to_server
 * create rule group
 * associate with a vpc
 
+### Inbound endpoint
+### Outbound endpoint
+### rule
+`s3.us-east-1.amazonaws.com` forward to a dns server

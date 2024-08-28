@@ -12,7 +12,7 @@ Description=My Python Application
 After=network.target
 
 [Service]
-User=ec2-user
+User=root
 ExecStart=python3 /app/a.py
 
 [Install]

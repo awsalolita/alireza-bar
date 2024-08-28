@@ -21,7 +21,7 @@ spec:
     cpu: "10"
     memory: 10Gi
   disruption:
-    consolidateAfter: 30s
+    consolidateAfter: 180s
     consolidationPolicy: WhenEmpty
     # consolidationPolicy: WhenUnderutilized
     expireAfter: 720h # 30 * 24h = 720h

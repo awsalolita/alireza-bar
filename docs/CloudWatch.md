@@ -129,7 +129,8 @@ parse '* * * * * * * * * * * *' as Mon, day, timestamp, destip, id, msg1, msg2, 
 
 # EventBridge
 * cron expression  
-`rate(1 minute)`   
+`rate(1 minute)`     
+(seconds optional),minute, hour, day of month, month, day of week, year      
 `cron(*/1 * * * ? *)`
 
 

@@ -1,5 +1,16 @@
-# zip code
+# Events
+## S3 notification trigger
+* get key and bucket
+```python
+for record in event['Records']
+    bucket = record['s3']['bucket']['name']
+    key = record['s3']['object']['key']
 ```
+
+
+
+# zip code
+```python
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import time
@@ -23,10 +34,10 @@ for x in range(1, 201):
     time.sleep(1)
 
 ```
-```
+```bash
 zip dep.zip b.py
 ```
-```
+```bash
 aws lambda create-function \
     --function-name genre_function \
     --runtime python3.11 \
@@ -36,16 +47,29 @@ aws lambda create-function \
 
 ```
 * update the code
-```
+```bash
 aws lambda update-function-configuration \
     --function-name genre_function \
     --tracing-config Mode=Active
 ```
 # invoke lambda cli
-```
+```bash
 aws lambda invoke \
     --function-name genre_function \
     --cli-binary-format raw-in-base64-out \
     --payload '{ "genre": "Action" }' \
     response.json
+```
+# SAM
+```bash
+sam init
+sam build
+```
+
+```yaml
+      Runtime: python3.8
+      AutoPublishAlias: live
+      DeploymentPreference:
+        Type: Canary10Percent5Minutes #or Linear10PercentEvery1Minute
+        
 ```

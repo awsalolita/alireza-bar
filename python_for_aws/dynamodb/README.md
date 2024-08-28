@@ -5,9 +5,7 @@
 
 # on demand to provisioned
 * changing once per 24 hours
-```
 
-``` 
 
 # autoscaling
 * for READ CAPACITY

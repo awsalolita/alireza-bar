@@ -1,5 +1,5 @@
-# install kubeadm
-curl -LO https://dl.k8s.io/release/v1.29.2/bin/linux/amd64/kubectl
+# install kubectl
+curl -LO https://dl.k8s.io/release/v1.29.7/bin/linux/amd64/kubectl
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 # install helm
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
@@ -65,7 +65,11 @@ else
 fi
 
 
-curl -sS https://webinstall.dev/k9s | bash
+#curl -sS https://webinstall.dev/k9s | bash
+
+wget https://github.com/derailed/k9s/releases/download/v0.32.5/k9s_linux_amd64.rpm
+
+yum install k9s_linux_amd64.rpm
 
 sudo rm -r aws*
 sudo rm -r kubectl

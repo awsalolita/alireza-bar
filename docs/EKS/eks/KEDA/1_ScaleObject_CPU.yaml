@@ -1,0 +1,36 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: kedahpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: app
+  pollingInterval: 30 # default is 30
+  initialCooldownPeriod: 30 
+  cooldownPeriod: 60 # default is 300 
+  minReplicaCount: 4  # default is 0
+  maxReplicaCount: 10 # default is 100
+  advanced:
+    horizontalPodAutoscalerConfig:
+      name: app1hpa
+      behavior:
+        scaleDown:
+          # waits for the metric to get bellow the target
+          stabilizationWindowSeconds: 600
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 90
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 100
+            periodSeconds: 15
+  triggers:
+  - type: cpu
+    metricType: Utilization # Allowed types are 'Utilization' or 'AverageValue'
+    metadata:
+      value: "20"

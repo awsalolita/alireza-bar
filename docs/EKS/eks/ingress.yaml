@@ -1,19 +1,26 @@
+# https://easoncao.com/zero-downtime-deployment-when-using-alb-ingress-controller-on-amazon-eks-and-prevent-502-error/#scenario-rolling-the-new-container-image-to-existing-container-application-with-potential-service-downtime
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-wildcard-host
+  name: app
   annotations:
-    kubernetes.io/ingress.class: "alb"
-    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/group.name: my-group
+    alb.ingress.kubernetes.io/group.order: "10"
+    alb.ingress.kubernetes.io/load-balancer-name: myelb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: instance
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/success-codes: '200,301,302'
+    alb.ingress.kubernetes.io/target-group-attributes: load_balancing.algorithm.type=least_outstanding_requests
 spec:
   rules:
-  - host: "foo.bar.com" # dont set when you dont have a domain
+  - host:  # dont set when you dont have a domain
     http:
       paths:
       - pathType: Prefix
-        path: "/bar"
+        path: "/"
         backend:
           service:
-            name: service1
+            name: app-svc-web
             port:
-              number: 80
+              number: 8000

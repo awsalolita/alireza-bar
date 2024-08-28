@@ -1,8 +1,15 @@
+# Firehose to S3
+* Convert it to apache parquet
+* Inline parsing for JSON
+
+# Firehose Lambda transformation
+* 
+
 # Cloudwatch subscription filter to kinesis DataStreams
 * you can provision only one shard
 
 
-# gunzip the data from kinesis from cloudwatch
+### gunzip the data from kinesis from cloudwatch
 * test event
 ```json
 {"Records": [{"kinesis": {"kinesisSchemaVersion": "1.0", "partitionKey": "e9239619b397ede01b2234e44776f191", "sequenceNumber": "49654139499842831375873712704771204015368165377871708162", "data": "H4sIAAAAAAAA/7WRTWsbMRCG/4qYUwtO0Gj0fTPEDRR6qXMLxqx3VVfgXS2S1q0J/u9lnaQkpL20BOYgxKuX5xk9QB9Kafbh7jQG8HCzvFtuv6zW6+XtChaQfgwhgwfUSJpzayQaWMAh7W9zmkbw0DW12TUlbEvIx5C3JbRTjvW0PaR9eYyuaw5NDx7iFec76oLqlLWGlNAcFlCmXWlzHGtMw6d4qCEX8Pe/i9ljMSvlO2vTMIR2DrJL/ebSvzqGoc5vHiB24IEsOTKoUBnHDZF0ZEmhEIKs5Zakc8qR5FahVMIIdNYoK2eWGvtQatOP4NEI1ESGuHV68bwm8PB5OjAhGDeelCfO4niF/HkQZ9DuXnGt1Mazr6EN8Rg61sXyRM++5dQz5NfzXDtkY8qVSSWc9oj+RTJ0bHdiUwkZzov/k8P3kLt5SXqxmllZqVMXhvpnxbcmQiuOxqJEoa0jyxWRtsYpJaXSjqxy0kouJVkk6/72TUo79y8mEjeejU2/nYb488N860soJabho2dPJ9YeUpkdU36lCOfN+Rcm2lbgQgMAAA==", "approximateArrivalTimestamp": 1721633736.064}, "eventSource": "aws:kinesis", "eventVersion": "1.0", "eventID": "shardId-000000000000:49654139499842831375873712704771204015368165377871708162", "eventName": "aws:kinesis:record", "invokeIdentityArn": "arn:aws:iam::161360087417:role/LambdaCWLogsProcessorRole", "awsRegion": "us-east-1", "eventSourceARN": "arn:aws:kinesis:us-east-1:161360087417:stream/security_log_stream"}]}
@@ -12,6 +19,20 @@
 str(gzip.decompress(base64.b64decode(a)).decode())
 ```
 
+# Split shards
+```bash
+aws kinesis  split-shard \
+  --stream-name <value> \ 
+  --shard-to-split <value> \
+  --new-starting-hash-key <value> \
+```
+# update number of shards
+```bash
+aws kinesis update-shard-count \
+--stream-name <value> \
+--target-shard-count <value> \
+--scaling-type UNIFORM_SCALING
+```
 # apache flink notebook
 * creating notebook
 * creating glue db
@@ -44,17 +65,7 @@ WITH (
 # apache flink application
 * needs a jar application
 * s3 and log permissions
-
-
-
-
-
-
-
-
-
-
-
+* `Runtime properties`
 
 
 

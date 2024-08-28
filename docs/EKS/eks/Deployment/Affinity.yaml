@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  replicas: 45
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: AL
+                operator: In
+                values:
+                - '2'
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: AL
+                operator: In
+                values:
+                - '2'
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80

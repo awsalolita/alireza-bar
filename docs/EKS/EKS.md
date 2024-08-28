@@ -1,6 +1,20 @@
 https://www.eksworkshop.com/docs
 
 # 0.0 Create Iam
+# 0.1 Increase number of max pods
+* make the oidc first 
+* choose an image that is eks optimized and a user data like bellow and increase max pods
+`amazon-eks-node-al2023-x86_64-standard-1.30`
+```bash
+
+aws ssm get-parameter --name /aws/service/eks/optimized-ami/1.30/amazon-linux-2023/x86_64/standard/recommended/image_id  --region region-code --query "Parameter.Value" --output text
+```
+* [here](./eks/0-LaunchTemplate/UserData2023.yaml)
+```bash
+kubectl -n kube-system set env ds aws-node ENABLE_PREFIX_DELEGATION=true
+kubectl -n kube-system set env ds aws-node WARM_PREFIX_TARGET=1
+```
+
 # 0 Create Cluster
 ```
 eksctl create cluster \
@@ -63,7 +77,7 @@ eksctl create iamserviceaccount \
 ### OPTION B : Create roles and SA seprately
 
 * Create role with web identity trustpolicy  or with [this custom trustpolicy](../../common_policies/EfsEKS_truspolicy.json)
-* create [sa like this](../../eks/ServiceAccount.yaml)
+* create [sa like this](./eks/ServiceAccount.yaml)
 
 ## Pod Identity
 ### create eks-pod-identity-agent add on
@@ -133,7 +147,7 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
   --set clusterName=mycluster \
   --set serviceAccount.create=false \
-  --set serviceAccount.name=aws-load-balancer-controller 
+  --set serviceAccount.name=aws-load-balancer-controller \
   --set vpcId=vpc-xxxxxxxx \
   --set region=region-code \
 ```
@@ -339,6 +353,7 @@ helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter  \
 --version 0.37.0 \
 --set "settings.clusterName=mycluster" \
 --set "serviceAccount.annotations.eks\.amazonaws\.com/role-arn=<ARN>" \
+--set aws.defaultInstanceProfile=<instanceprof> \
 --set controller.resources.requests.cpu=1 \
 --set controller.resources.requests.memory=1Gi \
 --set controller.resources.limits.cpu=1 \
@@ -363,8 +378,67 @@ helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter  \
 ```
 * you can add for `core-dns` `metric server` too 
 ## CAS (cluster auto scaler)
-
-
+* tag your ASG 
+```
+k8s.io/cluster-autoscaler/enabled : true
+k8s.io/cluster-autoscaler/<cluster-name> : "owned"
+```
+* iam for oidc
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "autoscaling:DescribeAutoScalingGroups",
+        "autoscaling:DescribeAutoScalingInstances",
+        "autoscaling:DescribeLaunchConfigurations",
+        "autoscaling:DescribeScalingActivities",
+        "ec2:DescribeImages",
+        "ec2:DescribeInstanceTypes",
+        "ec2:DescribeLaunchTemplateVersions",
+        "ec2:GetInstanceTypesFromInstanceRequirements",
+        "eks:DescribeNodegroup"
+      ],
+      "Resource": ["*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "autoscaling:SetDesiredCapacity",
+        "autoscaling:TerminateInstanceInAutoScalingGroup"
+      ],
+      "Resource": ["*"]
+    }
+  ]
+}
+```
+* install
+* strats : `random, most-pods, least-waste, and priority`
+* BE CAREFUL `skip-nodes-with-local-storage`
+```bash
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm upgrade --install cluster-autoscaler autoscaler/cluster-autoscaler \
+  --version 9.37.0\
+  --namespace "kube-system" \
+  --set "cloudProvider=aws" \
+  --set "autoDiscovery.clusterName=${EKS_CLUSTER_NAME}" \
+  --set "awsRegion=${AWS_REGION}" \
+  --set "extraArgs.skip-nodes-with-local-storage=false" \
+  --set "extraArgs.skip-nodes-with-system-pods=false" \
+  --set "rbac.serviceAccount.name=cluster-autoscaler-sa" \
+  --set "extraArgs.balance-similar-node-groups=true" \
+  --set "extraArgs.scale-down-unneeded-time=10m" \
+  --set "extraArgs.expander=most-pods" \
+  --set "rbac.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"="$CLUSTER_AUTOSCALER_ROLE" \
+  --wait
+```
+* annotate stateless pods for eviction
+```
+cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+```
+* [more config ](https://overcast.blog/13-kubernetes-cluster-autoscaler-configurations-you-should-know-7e2039a94514)
 
 # AutoScale Pods
 ## HPA
@@ -382,6 +456,10 @@ helm upgrade --install keda kedacore/keda \
   --set "podIdentity.aws.irsa.enabled=true" \
   --set "podIdentity.aws.irsa.roleArn=${KEDA_ROLE_ARN}" \
   --wait # access to cloudwatch
+```
+* add on
+```bash
+helm install http-add-on kedacore/keda-add-ons-http --namespace keda
 ```
 
 
@@ -407,6 +485,40 @@ eksctl create iamserviceaccount \
 
 # Metric server
 
+```bash
+helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+helm upgrade --install metrics-server metrics-server/metrics-server --set containerPort=10251 --set-string "defaultArgs[0]=--cert-dir=/tmp" --set-string "defaultArgs[1]=--kubelet-preferred-address-types=InternalIP\,ExternalIP\,Hostname" --set-string "defaultArgs[2]=--kubelet-use-node-status-port" --set-string "defaultArgs[3]=--metric-resolution=10s" --set-string "defaultArgs[4]=--kubelet-insecure-tls" --version 3.11.0
 ```
 
+# Commands
+* run the pod with the secret
+* kubectl cp the binary to test 
+```bash
+kubectl cp ./bin  pod:path
+
+# dont forget
+apt update
+apt install ca-certificates
+```
+
+# prometheus
+
+```bash
+helm upgrade -i prometheus prometheus-community/prometheus     --namespace prometheus     --set  server.persistentVolume.enabled=false --set alertmanager.enabled=false
+```
+
+# Istio
+* install
+```bash
+helm repo add istio https://istio-release.storage.googleapis.com/charts
+kubectl create namespace istio-system
+helm install istiod istio/istiod --namespace istio-system
+
+
+helm repo add stable https://charts.helm.sh/stable
+
+```
+# Prometheus adapter
+```bash
+helm -n prometheus install prometheus-adapter prometheus-community/prometheus-adapter -f prometheus-adapter.yaml
 ```

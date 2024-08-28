@@ -65,3 +65,14 @@ table.update_item(
         ':val1': new_message
     }
 )
+
+table.update_item(
+    Key={
+        'improvement': improvement,
+        'region': region
+    },
+    UpdateExpression="ADD total_votes :votevalue",
+    ExpressionAttributeValues={
+        ':votevalue': 1
+    }
+)

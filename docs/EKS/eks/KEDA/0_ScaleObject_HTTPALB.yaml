@@ -8,9 +8,26 @@ spec:
     kind: Deployment
     name: ui
   pollingInterval: 30 # default is 30
-  cooldownPeriod: 300 # default is 300
-  minReplicaCount: 1  # default is 0
+  cooldownPeriod: 60 # default is 300 
+  minReplicaCount: 4  # default is 0
   maxReplicaCount: 10 # default is 100
+  advanced:
+    horizontalPodAutoscalerConfig:
+      name: app1hpa
+      behavior:
+        scaleDown:
+          # waits for the metric to get bellow the target
+          stabilizationWindowSeconds: 600
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 90
+        scaleUp:
+          stabilizationWindowSeconds: 0
+          policies:
+          - type: Percent
+            value: 100
+            periodSeconds: 15
   triggers:
     - type: aws-cloudwatch
       metadata:
@@ -22,7 +39,7 @@ spec:
         metricStat: Sum
         metricStatPeriod: "60"
         metricUnit: Count
-        targetMetricValue: "100"
+        targetMetricValue: "130"
         minMetricValue: "0"
         awsRegion: "${AWS_REGION}"
         identityOwner: operator

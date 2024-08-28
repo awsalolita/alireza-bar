@@ -1,5 +1,5 @@
 
-// imaging we have a s3 with /{username} and every user need to access their own username prefix
+// imagine we have a s3 with /{username} and every user need to access their own username prefix
 {
     "Version": "2012-10-17",
     "Statement":[

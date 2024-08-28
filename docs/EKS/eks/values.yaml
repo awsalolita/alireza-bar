@@ -56,7 +56,7 @@ annotations: {}
 # List of services
 services: 
   - name: web
-    type: ClusterIP
+    type: ClusterIP # NodePort
     annotations: {}
     specs:
     - port: 8000
@@ -95,7 +95,11 @@ readiness:
   failureThreshold: 3
 
 
-updateStrategy: {}
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 25% 
   ## For stateless apps, Default
   # type: RollingUpdate
   # rollingUpdate: {}
@@ -179,12 +183,15 @@ ingress:
   annotations: 
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/group.name: my-group
+    alb.ingress.kubernetes.io/load-balancer-name: myelb
     alb.ingress.kubernetes.io/scheme: internet-facing
     # when using fargate or use service nodeport
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/group.order: '1'
+    # instance ,ip
+    alb.ingress.kubernetes.io/target-type: instance
+    alb.ingress.kubernetes.io/group.order: '10' # for root not 1
+    alb.ingress.kubernetes.io/target-group-attributes: load_balancing.algorithm.type=least_outstanding_requests
     # status code for health check
-    #alb.ingress.kubernetes.io/success-codes: '200,404'
+    alb.ingress.kubernetes.io/success-codes: '200,301,302'
     
   hosts:
     - host: arp.com # remove it if you dont have domain
@@ -206,11 +213,11 @@ affinity: {}
 
 resources: 
   limits:
-    cpu: 300m
-    memory: 300Mi
+    cpu: 200m
+    memory: 400Mi
   requests:
     cpu: 200m
-    memory: 200Mi
+    memory: 400Mi
 
 podSecurityContext: {}
   # fsGroup: 2000

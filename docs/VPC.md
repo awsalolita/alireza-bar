@@ -1,6 +1,6 @@
-# Endpoint
+# Endpoint Policy
 * restrict with policy (takes time)
-```
+```json
 {
 	"Statement": [
 		{
@@ -20,7 +20,7 @@
 # FlowLogs
 * create loggroup
 * role to write to the loggroup
-```
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -38,7 +38,7 @@
   ]
 }
 ```
-```
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -51,4 +51,9 @@
         }
     ]
 }
+```
+# Traffic
+* capture traffic
+```bash
+sudo tcpdump -AX -i
 ```

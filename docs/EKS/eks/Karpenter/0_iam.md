@@ -9,6 +9,7 @@
 # 2 iam for karpenter SA
 * `KarpenterControllerRole-${CLUSTER_NAME}`
 * iam role with WebIdenity trust policy for all SA
+* or change the `iam passrole`
 ``` json
 CLUSTER_NAME="mycluster"
 AWS_REGION="us-east-1"
