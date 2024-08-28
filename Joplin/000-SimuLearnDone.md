@@ -1,0 +1,2 @@
+- AWS SimuLearn: Data Lakes : bullshit
+- 
