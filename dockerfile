@@ -1,3 +1,18 @@
+FROM alpine:3.14
+RUN mkdir /app
+
+
+COPY ./app /app
+COPY ./config.json /app
+RUN chmod +x /app/app
+RUN mkdir /data
+
+WORKDIR /app
+EXPOSE 8000
+
+CMD [ "/app/app" ]
+
+
 # arpjoker/awssecret 
 # alpine:3.14
 FROM python:alpine
