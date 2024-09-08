@@ -32,3 +32,18 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO pirate;
 \d table_name
 ```
 * show 
+
+# what are the queries, cronjob
+
+```sql
+select * from pg_stat_activity where query like 'call%';
+```
+
+```sql
+select * from cron.job;
+select * from cron.job_run_details where status='running';
+\df+ employee_load
+
+SELECT pid, pg_terminate_backend(pid) FROM pg_stat_activity WHERE query like ('call employee_load%');
+SELECT cron.unschedule(1);
+```

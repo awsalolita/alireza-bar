@@ -89,7 +89,8 @@ Resources:
             Statement:
               - Effect: Allow
                 Action: 
-                  - 'logs:CreateLogStream'
+                
+                  - 'logs:CreateLogStream' dfaf bugged
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
                   - 'logs:DescribeLogGroups'

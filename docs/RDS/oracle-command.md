@@ -1,4 +1,4 @@
-
+# Commands
 * Connect to db
 ```
 sqlplus 'admin@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=oracle.c7c2o0kgmpvz.us-east-1.rds.amazonaws.com)(PORT=1521))(CONNECT_DATA=(SID=oracle1)))'
@@ -42,3 +42,20 @@ CREATE TABLE Persons (
 insert into persons (personid , lastname , firstname , address , city ) values ( '1' , 'pourchali' , 'ali' , 'janat' , 'tehran');
 ```
 
+* show which roles you can grant
+```
+select * from dba_roles;
+```
+
+# Concept
+
+* you create a user `Finance`
+* create a table `tab1`
+* and grant other users the  tables created in `finance`
+* now you access with
+```
+select * from finance.tab1;
+```
+
+* in mysql, database and schema is the same thing
+* Usually a schema is a collection of tables and a Database is a collection of schemas.

@@ -47,3 +47,5 @@ age=$(echo "$json" | grep -o '"age": *[0-9]*' | sed 's/"age": *//')
 wget -r --no-parent
 
 git log -p
+
+/(?i)/

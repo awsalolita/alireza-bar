@@ -324,7 +324,30 @@ aws eks create-access-entry --cluster-name mycluster --principal-arn arn:aws:iam
 ```
 eksctl get iamidentitymapping --cluster my-cluster --region=region-code
 ```
-
+## manual
+```yaml
+apiVersion: v1
+data:
+  mapRoles: |
+    - groups:
+      - system:bootstrappers
+      - system:nodes
+      rolearn: arn:aws:iam::111122223333:role/my-role
+      username: system:node:{{EC2PrivateDNSName}}
+    - groups:
+      - eks-console-dashboard-full-access-group
+      rolearn: arn:aws:iam::111122223333:role/my-console-viewer-role
+      username: my-console-viewer-role
+  mapUsers: |
+    - groups:
+      - system:masters
+      userarn: arn:aws:iam::111122223333:user/admin
+      username: admin
+    - groups:
+      - eks-console-dashboard-restricted-access-group      
+      userarn: arn:aws:iam::444455556666:user/my-user
+      username: my-user
+```
 # delete cni role after creating SA
 
 ```

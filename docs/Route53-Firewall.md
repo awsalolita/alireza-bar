@@ -14,6 +14,8 @@
 * Create a firewall in a subnet
 * route the traffic to the firewall with route tabel `gateway loadbalancer` `vpce-XXXX`
 
+* setup loggin for `alert and flows`
+
 ### suricata rule group 
 * drop non tls traffic
 ```

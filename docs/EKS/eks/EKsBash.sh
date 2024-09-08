@@ -69,8 +69,7 @@ fi
 
 wget https://github.com/derailed/k9s/releases/download/v0.32.5/k9s_linux_amd64.rpm
 
-yum install k9s_linux_amd64.rpm
-
+yum install k9s_linux_amd64.rpm -y
 sudo rm -r aws*
 sudo rm -r kubectl
 sudo rm -r get_helm.sh

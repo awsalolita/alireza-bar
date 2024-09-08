@@ -1,23 +1,6 @@
 FROM alpine:3.14
 RUN mkdir /app
 
-RUN apk add aws-cli
-COPY ./app /app
-COPY ./script.sh /app
-RUN chmod +x /app/app
-RUN mkdir /data
-
-WORKDIR /app
-
-RUN chmod +x /app/script.sh
-EXPOSE 8000
-
-CMD [ "/bin/sh", "-c", "/app/script.sh; /app/app" ]
-
-
-FROM alpine:3.14
-RUN mkdir /app
-
 
 COPY ./app /app
 COPY ./config.json /app

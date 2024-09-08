@@ -11,6 +11,20 @@ ec2message
 `ConfigureProxy`
 ``
 ### modify with precondition instance type
+```yaml
+- action: aws:runPowerShellScript
+  name: PatchWindows
+  precondition:
+    StringEquals:
+    - platformType
+    - Windows
+- action: aws:runShellScript
+  name: PatchLinux
+  precondition:
+    StringEquals:
+    - platformType
+    - Linux
+```
 
 # PortForward
 * port forward a ssh or rdp port

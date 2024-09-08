@@ -11,7 +11,17 @@ cat /var/log/cloud-init-output.log | grep -iA 20  modules:final
 ```bash
 aws ec2 describe-key-pairs --key-names Local --include-public-key
 ```
+### Mounting volume
+* stop instance
+* detach and attach to another ec2
+* mount it 
+```bash
+mount /dev/sdb1 /mnt
+OR
+mount -t xfs -o nouuid /dev/sdb1 /mnt
+```
 ### Cloud-init add sshkey
+* cloud init MUST BE INSTALLED BEFORE , ()
 ```yaml
 #cloud-config
 cloud_final_modules:
