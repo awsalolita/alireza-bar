@@ -135,6 +135,7 @@ parse '* * * * * * * * * * * *' as Mon, day, timestamp, destip, id, msg1, msg2, 
 
 
 # xray
+
 * sdk in your code and then install xray agent
 * `recorder` `middleware` 
 # enable xray on lambda
@@ -149,7 +150,29 @@ from aws_xray_sdk.core import patch_all
 
 patch_all()
 ```
+# xray supports
+* Amazon API Gateway
+* AWS App Runner
+* AWS Elastic Beanstalk
+* Amazon EC2
+* AWS Lambda
+* ECS EKS
+* NLB and ALB
+* DDB
+* s3
+* SNS
+* SQS, eventbridge
+* stepfunction , app mesh
+# implement xray
+* Some AWS services like AWS Lambda, Amazon API Gateway, and Elastic Load Balancer have built-in options to enable X-Ray
+* EC2
+```
+sudo yum install -y amazon-cloudwatch-agent
+curl https://s3.amazonaws.com/aws-xray-assets.us-east-1/xray-daemon/aws-xray-daemon-linux-3.x.x.tar.gz | tar -xz
+sudo ./xray -o -n
+```
 
 # Contributer insights
 Example for the querylog of route53    
 * Create a rule
+

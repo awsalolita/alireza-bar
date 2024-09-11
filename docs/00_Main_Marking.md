@@ -64,7 +64,7 @@
 - [ ] Dynamodb Encryption  
 - [ ] Flowlog  
 - [ ] S3 Security  
-- [ ] ECR scan,immutable,KMS  
+- [ ] ECR scan,immutable,KMS, policy
 - [ ] Secret rotation  
 - [ ] RDS backup  
 - [ ] Cloudwatch alarm (instance status)
@@ -74,7 +74,9 @@
 - lifecycle policy
 - Event bridge schduler
 - Deletion protection for everything
-- snapshot the running rds
+- snapshot the running rds and everything
+- encrypt everything
+- TAG all the resources
 - No retion more than 7
 - Rds config logs
 - dynamo backup
