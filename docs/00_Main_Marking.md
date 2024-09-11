@@ -68,7 +68,20 @@
 - [ ] Secret rotation  
 - [ ] RDS backup  
 - [ ] Cloudwatch alarm (instance status)
-
+- xray and flow logs
+- ecr resource policy
+- intelicent tiering
+- lifecycle policy
+- Event bridge schduler
+- Deletion protection for everything
+- snapshot the running rds
+- No retion more than 7
+- Rds config logs
+- dynamo backup
+- Dynamo encryption
+- Api gateway active tracing 
+- Eventbridge with scheduler
+- Batch 
 # \#[kazan 2019](https://docs.google.com/spreadsheets/d/1wIgdeG6O1hb9I\_lkyoHmAsULQrmQr0fogg4J0gaRtC0/edit?gid=808313302\#gid=808313302)
 
 - C1
